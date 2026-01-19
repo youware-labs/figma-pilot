@@ -77,6 +77,15 @@ export async function handleCreate(params: CreateParams): Promise<CreateResult> 
     if (hasAutoLayout) {
       if (params.layoutSizingHorizontal) {
         (node as any).layoutSizingHorizontal = params.layoutSizingHorizontal;
+
+        // For text nodes with FILL horizontal sizing, enable text wrapping
+        if (params.layoutSizingHorizontal === 'FILL' && node.type === 'TEXT') {
+          const textNode = node as TextNode;
+          // Only change if not explicitly set to something else
+          if (!params.textAutoResize) {
+            textNode.textAutoResize = 'HEIGHT';
+          }
+        }
       }
       if (params.layoutSizingVertical) {
         (node as any).layoutSizingVertical = params.layoutSizingVertical;

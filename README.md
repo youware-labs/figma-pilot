@@ -4,6 +4,17 @@ A bridge that enables AI agents to create and modify Figma designs through natur
 
 让 AI 代理（如 Claude Code、Gemini CLI）能够直接操作 Figma 设计文件。
 
+## One-Line Install (Local) / 一键安装
+
+```bash
+git clone https://github.com/youware-labs/figma-pilot.git && cd figma-pilot && ./scripts/install.sh
+```
+
+This will:
+- Build the project
+- Configure Claude Code MCP
+- Open Figma plugin folder for manual import
+
 ## Quick Start (For Users) / 快速开始
 
 ### 1. Configure MCP / 配置 MCP

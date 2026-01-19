@@ -141,7 +141,7 @@
       xhr.onerror = function() {
         if (isConnected) {
           isConnected = false;
-          setStatus('waiting', 'Disconnected', 'Run CLI again');
+          setStatus('waiting', 'Disconnected', 'Waiting for MCP...');
           log('Connection error', 'error');
         } else if (pollCount <= 5) {
           log('Waiting... (poll #' + pollCount + ')', 'warn');
@@ -205,7 +205,7 @@
     };
 
     // Start
-    setStatus('waiting', 'Waiting for CLI...', 'Run: bun run cli status');
+    setStatus('waiting', 'Waiting for MCP...', 'Use figma_status() in Claude');
     log('Bridge: ' + BRIDGE_URL, 'info');
     pollForRequests();
   </script>
