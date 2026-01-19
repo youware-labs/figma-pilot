@@ -484,7 +484,7 @@ const TOOLS: Tool[] = [
   },
   {
     name: "figma_export",
-    description: "Export elements as images (PNG, SVG, PDF).",
+    description: "Export elements as images (PNG, SVG, PDF). Use after finishing a request to review a PNG.",
     inputSchema: {
       type: "object",
       properties: {
@@ -560,7 +560,10 @@ async function main() {
     }
 
     try {
-      const params = args || {};
+      let params = args || {};
+      if (name === "figma_export_png") {
+        params = { ...params, format: "png" };
+      }
       const result = await bridge.sendRequest(operation, params as Record<string, unknown>);
 
       return {

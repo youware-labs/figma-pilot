@@ -56,6 +56,11 @@ Ask your AI agent:
 "Check accessibility and fix any issues"
 ```
 
+After finishing a requested change, export a PNG for review:
+```
+figma_export({ target: "selection", format: "png", scale: 2 })
+```
+
 ## How It Works / 工作原理
 
 ```
@@ -83,7 +88,7 @@ The MCP server includes a built-in HTTP bridge. No separate server process neede
 | `figma_to_component` | Convert selection to component |
 | `figma_create_variants` | Create component variants |
 | `figma_ensure_accessibility` | Check and fix accessibility |
-| `figma_export` | Export as image |
+| `figma_export` | Export as image (use after finishing a request to review PNG) |
 
 ## Development / 开发
 

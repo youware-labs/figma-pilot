@@ -57,7 +57,7 @@ Once the MCP is configured and the Figma plugin is running, you can ask Claude t
 | `figma_to_component` | Convert to component |
 | `figma_create_variants` | Create component variants |
 | `figma_ensure_accessibility` | Check/fix accessibility issues |
-| `figma_export` | Export as PNG/SVG/PDF |
+| `figma_export` | Export as PNG/SVG/PDF (use after finishing a request to review PNG) |
 
 ## Example Usage
 
@@ -79,6 +79,9 @@ figma_modify({ target: "selection", fill: "#0066FF", cornerRadius: 8 })
 
 // Check accessibility
 figma_ensure_accessibility({ target: "page", level: "AA", autoFix: true })
+
+// After finishing a requested change, export PNG for review
+figma_export({ target: "selection", format: "png", scale: 2 })
 ```
 
 ## How It Works

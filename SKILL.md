@@ -895,13 +895,14 @@ figma_create({
 ## Tips for AI Agents
 
 1. **Always call `figma_status()` first** to verify the connection before running other commands
-2. **Always specify position** when creating multiple elements to avoid overlap - use `x` and `y` parameters
-3. **Use semantic types** (`card`, `button`, `nav`) when possible - they come pre-styled with auto-layout
-4. **Use nested `children`** for complex layouts instead of creating elements separately
-5. **Use `"selection"` target** for operations on user-selected elements
-6. **Run accessibility checks** after creating UI components with `figma_ensure_accessibility`
-7. **Use `figma_list_components`** to discover existing components before creating instances
-8. **Prefer `"name:"` targeting** over IDs - names are more readable and stable
-9. **Use `textColor` for text elements** instead of `fill` for better clarity
-10. **Use `maxWidth` for long text** to enable automatic text wrapping
-11. **Use `layoutSizingHorizontal: "FILL"`** to make child elements stretch to parent width
+2. **After finishing a requested change (not every step), export a PNG for review** using `figma_export({ target: "selection", format: "png", scale: 2 })`
+3. **Always specify position** when creating multiple elements to avoid overlap - use `x` and `y` parameters
+4. **Use semantic types** (`card`, `button`, `nav`) when possible - they come pre-styled with auto-layout
+5. **Use nested `children`** for complex layouts instead of creating elements separately
+6. **Use `"selection"` target** for operations on user-selected elements
+7. **Run accessibility checks** after creating UI components with `figma_ensure_accessibility`
+8. **Use `figma_list_components`** to discover existing components before creating instances
+9. **Prefer `"name:"` targeting** over IDs - names are more readable and stable
+10. **Use `textColor` for text elements** instead of `fill` for better clarity
+11. **Use `maxWidth` for long text** to enable automatic text wrapping
+12. **Use `layoutSizingHorizontal: "FILL"`** to make child elements stretch to parent width
