@@ -138,6 +138,59 @@ class EmbeddedBridgeServer {
       return;
     }
 
+    // External MCP server queues requests
+    if (url.pathname === '/queue' && req.method === 'POST') {
+      let body = '';
+      req.on('data', chunk => body += chunk);
+      req.on('end', async () => {
+        try {
+          const { operation, params, timeout } = JSON.parse(body) as {
+            operation: OperationType;
+            params: Record<string, unknown>;
+            timeout?: number;
+          };
+
+          const request: BridgeRequest = {
+            id: generateRequestId(),
+            operation,
+            params,
+          };
+
+          const timeoutMs = timeout || BRIDGE_CONFIG.TIMEOUT_MS;
+
+          const result = await new Promise<BridgeResponse>((resolve, reject) => {
+            const timeoutHandle = setTimeout(() => {
+              this.pendingRequests.delete(request.id);
+              reject(new Error(`Request timeout: ${operation}`));
+            }, timeoutMs);
+
+            this.pendingRequests.set(request.id, {
+              resolve: (response) => resolve(response),
+              reject,
+              timeout: timeoutHandle,
+            });
+
+            this.requestQueue.push(request);
+          });
+
+          if (result.success) {
+            res.writeHead(200);
+            res.end(JSON.stringify({ success: true, data: result.data }));
+          } else {
+            res.writeHead(200);
+            res.end(JSON.stringify({ success: false, error: result.error }));
+          }
+        } catch (error) {
+          res.writeHead(500);
+          res.end(JSON.stringify({
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error',
+          }));
+        }
+      });
+      return;
+    }
+
     res.writeHead(404);
     res.end(JSON.stringify({ error: 'Not found' }));
   }
