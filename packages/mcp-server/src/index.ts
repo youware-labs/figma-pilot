@@ -3,7 +3,7 @@
  * figma-pilot MCP Server
  *
  * Exposes figma-pilot CLI capabilities as MCP tools for AI agents.
- * Connects to the Figma plugin via the same HTTP bridge as the CLI.
+ * Includes built-in bridge server for Figma plugin communication.
  */
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -19,8 +19,232 @@ import type {
   BridgeResponse,
   OperationType,
 } from "@figma-pilot/shared";
+import { createServer, IncomingMessage, ServerResponse } from "http";
 
+// ============================================================================
+// Bridge Server (embedded)
+// ============================================================================
+
+interface PendingRequest {
+  resolve: (response: BridgeResponse) => void;
+  reject: (error: Error) => void;
+  timeout: NodeJS.Timeout;
+}
+
+class EmbeddedBridgeServer {
+  private server: ReturnType<typeof createServer> | null = null;
+  private pendingRequests: Map<string, PendingRequest> = new Map();
+  private requestQueue: BridgeRequest[] = [];
+  private isRunning = false;
+
+  async start(): Promise<void> {
+    if (this.isRunning) return;
+
+    return new Promise((resolve, reject) => {
+      this.server = createServer((req, res) => this.handleRequest(req, res));
+
+      this.server.on('error', (err: NodeJS.ErrnoException) => {
+        if (err.code === 'EADDRINUSE') {
+          // Port already in use - another bridge is running, which is fine
+          console.error(`Bridge port ${BRIDGE_CONFIG.DEFAULT_PORT} already in use - connecting to existing bridge`);
+          this.isRunning = false;
+          resolve();
+        } else {
+          reject(err);
+        }
+      });
+
+      this.server.listen(BRIDGE_CONFIG.DEFAULT_PORT, BRIDGE_CONFIG.DEFAULT_HOST, () => {
+        this.isRunning = true;
+        console.error(`Bridge server started on http://${BRIDGE_CONFIG.DEFAULT_HOST}:${BRIDGE_CONFIG.DEFAULT_PORT}`);
+        resolve();
+      });
+    });
+  }
+
+  async stop(): Promise<void> {
+    if (this.server) {
+      this.server.close();
+      this.server = null;
+    }
+    this.isRunning = false;
+
+    // Reject all pending requests
+    for (const [, pending] of this.pendingRequests) {
+      clearTimeout(pending.timeout);
+      pending.reject(new Error('Bridge stopped'));
+    }
+    this.pendingRequests.clear();
+    this.requestQueue = [];
+  }
+
+  private handleRequest(req: IncomingMessage, res: ServerResponse): void {
+    const headers: Record<string, string> = {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+      'Content-Type': 'application/json',
+    };
+
+    // Set CORS headers
+    for (const [key, value] of Object.entries(headers)) {
+      res.setHeader(key, value);
+    }
+
+    // Handle CORS preflight
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204);
+      res.end();
+      return;
+    }
+
+    const url = new URL(req.url || '/', `http://${req.headers.host}`);
+
+    // Plugin polls for requests
+    if (url.pathname === '/poll' && req.method === 'GET') {
+      const requests = [...this.requestQueue];
+      this.requestQueue = [];
+      res.writeHead(200);
+      res.end(JSON.stringify({ requests }));
+      return;
+    }
+
+    // Plugin sends responses
+    if (url.pathname === '/response' && req.method === 'POST') {
+      let body = '';
+      req.on('data', chunk => body += chunk);
+      req.on('end', () => {
+        try {
+          const response = JSON.parse(body) as BridgeResponse;
+          this.handleResponse(response);
+          res.writeHead(200);
+          res.end(JSON.stringify({ success: true }));
+        } catch {
+          res.writeHead(400);
+          res.end(JSON.stringify({ error: 'Invalid response' }));
+        }
+      });
+      return;
+    }
+
+    // Health check
+    if (url.pathname === '/health') {
+      res.writeHead(200);
+      res.end(JSON.stringify({
+        status: 'ok',
+        pendingRequests: this.pendingRequests.size,
+        queuedRequests: this.requestQueue.length,
+      }));
+      return;
+    }
+
+    res.writeHead(404);
+    res.end(JSON.stringify({ error: 'Not found' }));
+  }
+
+  private handleResponse(response: BridgeResponse): void {
+    const pending = this.pendingRequests.get(response.id);
+    if (!pending) {
+      console.error(`No pending request for response: ${response.id}`);
+      return;
+    }
+
+    clearTimeout(pending.timeout);
+    this.pendingRequests.delete(response.id);
+    pending.resolve(response);
+  }
+
+  async sendRequest<T>(
+    operation: OperationType,
+    params: Record<string, unknown>
+  ): Promise<T> {
+    // If we're not running the bridge, try to connect to an external one
+    if (!this.isRunning) {
+      return this.sendToExternalBridge<T>(operation, params);
+    }
+
+    const request: BridgeRequest = {
+      id: generateRequestId(),
+      operation,
+      params,
+    };
+
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        this.pendingRequests.delete(request.id);
+        reject(new Error(`Request timeout: ${operation}`));
+      }, BRIDGE_CONFIG.TIMEOUT_MS);
+
+      this.pendingRequests.set(request.id, {
+        resolve: (response) => {
+          if (response.success) {
+            resolve(response.data as T);
+          } else {
+            reject(new Error(response.error || 'Unknown error'));
+          }
+        },
+        reject,
+        timeout,
+      });
+
+      this.requestQueue.push(request);
+    });
+  }
+
+  private async sendToExternalBridge<T>(
+    operation: OperationType,
+    params: Record<string, unknown>
+  ): Promise<T> {
+    const baseUrl = `http://${BRIDGE_CONFIG.DEFAULT_HOST}:${BRIDGE_CONFIG.DEFAULT_PORT}`;
+
+    const response = await fetch(`${baseUrl}/queue`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        operation,
+        params,
+        timeout: BRIDGE_CONFIG.TIMEOUT_MS,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Bridge request failed: ${response.statusText}`);
+    }
+
+    const result = await response.json() as { success: boolean; data?: T; error?: string };
+
+    if (!result.success) {
+      throw new Error(result.error || "Unknown error");
+    }
+
+    return result.data as T;
+  }
+
+  async checkHealth(): Promise<boolean> {
+    if (this.isRunning) {
+      return true;
+    }
+
+    // Check if external bridge is running
+    try {
+      const response = await fetch(
+        `http://${BRIDGE_CONFIG.DEFAULT_HOST}:${BRIDGE_CONFIG.DEFAULT_PORT}/health`
+      );
+      return response.ok;
+    } catch {
+      return false;
+    }
+  }
+
+  getIsRunning(): boolean {
+    return this.isRunning;
+  }
+}
+
+// ============================================================================
 // Tool definitions
+// ============================================================================
+
 const TOOLS: Tool[] = [
   {
     name: "figma_status",
@@ -56,203 +280,20 @@ const TOOLS: Tool[] = [
           enum: ["frame", "text", "rect", "ellipse", "line", "card", "button", "form", "nav", "input"],
           description: "Element type to create",
         },
-        name: {
-          type: "string",
-          description: "Name for the element",
-        },
-        width: {
-          type: "number",
-          description: "Width in pixels",
-        },
-        height: {
-          type: "number",
-          description: "Height in pixels",
-        },
-        x: {
-          type: "number",
-          description: "X position",
-        },
-        y: {
-          type: "number",
-          description: "Y position",
-        },
-        parent: {
-          type: "string",
-          description: "Parent element (ID, 'selection', or 'name:ElementName')",
-        },
-        fill: {
-          type: "string",
-          description: "Fill color (hex, e.g., '#FF0000')",
-        },
-        stroke: {
-          type: "string",
-          description: "Stroke color (hex)",
-        },
-        strokeWidth: {
-          type: "number",
-          description: "Stroke width",
-        },
-        cornerRadius: {
-          type: "number",
-          description: "Corner radius",
-        },
-        content: {
-          type: "string",
-          description: "Text content (for text elements)",
-        },
-        fontSize: {
-          type: "number",
-          description: "Font size (for text elements)",
-        },
-        fontWeight: {
-          type: "number",
-          description: "Font weight (for text elements)",
-        },
-        textColor: {
-          type: "string",
-          description: "Text color (hex). For text elements, preferred over 'fill' for clarity.",
-        },
-        textAutoResize: {
-          type: "string",
-          enum: ["WIDTH_AND_HEIGHT", "HEIGHT", "TRUNCATE", "NONE"],
-          description: "Text auto-resize mode. 'HEIGHT' enables text wrapping within maxWidth.",
-        },
-        maxWidth: {
-          type: "number",
-          description: "Maximum width for text wrapping. Automatically sets textAutoResize to HEIGHT.",
-        },
-        lineHeight: {
-          type: "number",
-          description: "Line height in pixels (for text elements)",
-        },
-        letterSpacing: {
-          type: "number",
-          description: "Letter spacing in pixels (for text elements)",
-        },
-        textDecoration: {
-          type: "string",
-          enum: ["NONE", "UNDERLINE", "STRIKETHROUGH"],
-          description: "Text decoration (for text elements)",
-        },
-        textCase: {
-          type: "string",
-          enum: ["ORIGINAL", "UPPER", "LOWER", "TITLE"],
-          description: "Text case transformation (for text elements)",
-        },
-        topLeftRadius: {
-          type: "number",
-          description: "Top-left corner radius (overrides cornerRadius)",
-        },
-        topRightRadius: {
-          type: "number",
-          description: "Top-right corner radius (overrides cornerRadius)",
-        },
-        bottomLeftRadius: {
-          type: "number",
-          description: "Bottom-left corner radius (overrides cornerRadius)",
-        },
-        bottomRightRadius: {
-          type: "number",
-          description: "Bottom-right corner radius (overrides cornerRadius)",
-        },
-        strokeAlign: {
-          type: "string",
-          enum: ["INSIDE", "OUTSIDE", "CENTER"],
-          description: "Stroke alignment relative to the shape boundary",
-        },
-        strokeCap: {
-          type: "string",
-          enum: ["NONE", "ROUND", "SQUARE", "ARROW_LINES", "ARROW_EQUILATERAL"],
-          description: "Stroke cap style (for lines)",
-        },
-        dashPattern: {
-          type: "array",
-          items: { type: "number" },
-          description: "Dash pattern for strokes, e.g., [5, 5] for dashed line",
-        },
-        effects: {
-          type: "array",
-          description: "Visual effects (shadows, blur)",
-          items: {
-            type: "object",
-            properties: {
-              type: { type: "string", enum: ["DROP_SHADOW", "INNER_SHADOW", "LAYER_BLUR", "BACKGROUND_BLUR"] },
-              color: { type: "string", description: "Color with alpha, e.g., '#00000040'" },
-              offset: { type: "object", properties: { x: { type: "number" }, y: { type: "number" } } },
-              radius: { type: "number", description: "Blur radius" },
-              spread: { type: "number", description: "Shadow spread (for shadows only)" },
-            },
-            required: ["type", "radius"],
-          },
-        },
-        gradient: {
-          type: "object",
-          description: "Gradient fill (overrides solid fill)",
-          properties: {
-            type: { type: "string", enum: ["LINEAR", "RADIAL", "ANGULAR", "DIAMOND"] },
-            angle: { type: "number", description: "Angle in degrees for linear gradient (0=left-to-right, 90=top-to-bottom)" },
-            stops: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  position: { type: "number", description: "Position from 0 to 1" },
-                  color: { type: "string", description: "Hex color" },
-                },
-                required: ["position", "color"],
-              },
-            },
-          },
-          required: ["type", "stops"],
-        },
-        rotation: {
-          type: "number",
-          description: "Rotation angle in degrees",
-        },
-        blendMode: {
-          type: "string",
-          enum: ["PASS_THROUGH", "NORMAL", "DARKEN", "MULTIPLY", "LINEAR_BURN", "COLOR_BURN", "LIGHTEN", "SCREEN", "LINEAR_DODGE", "COLOR_DODGE", "OVERLAY", "SOFT_LIGHT", "HARD_LIGHT", "DIFFERENCE", "EXCLUSION", "HUE", "SATURATION", "COLOR", "LUMINOSITY"],
-          description: "Blend mode for layer compositing",
-        },
-        clipsContent: {
-          type: "boolean",
-          description: "Whether the frame clips its children (for frames)",
-        },
-        constraints: {
-          type: "object",
-          description: "Responsive constraints",
-          properties: {
-            horizontal: { type: "string", enum: ["MIN", "CENTER", "MAX", "STRETCH", "SCALE"] },
-            vertical: { type: "string", enum: ["MIN", "CENTER", "MAX", "STRETCH", "SCALE"] },
-          },
-        },
-        layoutPositioning: {
-          type: "string",
-          enum: ["AUTO", "ABSOLUTE"],
-          description: "Positioning within auto-layout parent. ABSOLUTE removes from flow.",
-        },
-        minWidth: {
-          type: "number",
-          description: "Minimum width constraint",
-        },
-        maxHeight: {
-          type: "number",
-          description: "Maximum height constraint",
-        },
-        minHeight: {
-          type: "number",
-          description: "Minimum height constraint",
-        },
-        layoutSizingHorizontal: {
-          type: "string",
-          enum: ["FIXED", "HUG", "FILL"],
-          description: "Horizontal sizing mode when inside auto-layout. FILL stretches to parent, HUG wraps content.",
-        },
-        layoutSizingVertical: {
-          type: "string",
-          enum: ["FIXED", "HUG", "FILL"],
-          description: "Vertical sizing mode when inside auto-layout. FILL stretches to parent, HUG wraps content.",
-        },
+        name: { type: "string", description: "Name for the element" },
+        width: { type: "number", description: "Width in pixels" },
+        height: { type: "number", description: "Height in pixels" },
+        x: { type: "number", description: "X position" },
+        y: { type: "number", description: "Y position" },
+        parent: { type: "string", description: "Parent element (ID, 'selection', or 'name:ElementName')" },
+        fill: { type: "string", description: "Fill color (hex, e.g., '#FF0000')" },
+        stroke: { type: "string", description: "Stroke color (hex)" },
+        strokeWidth: { type: "number", description: "Stroke width" },
+        cornerRadius: { type: "number", description: "Corner radius" },
+        content: { type: "string", description: "Text content (for text elements)" },
+        fontSize: { type: "number", description: "Font size (for text elements)" },
+        fontWeight: { type: "number", description: "Font weight (for text elements)" },
+        textColor: { type: "string", description: "Text color (hex). For text elements, preferred over 'fill' for clarity." },
         layout: {
           type: "object",
           description: "Auto-layout configuration",
@@ -260,11 +301,7 @@ const TOOLS: Tool[] = [
             direction: { type: "string", enum: ["row", "column"] },
             gap: { type: "number" },
             padding: { type: "number" },
-            alignItems: {
-              type: "string",
-              enum: ["start", "center", "end", "baseline"],
-              description: "Cross-axis alignment. For stretch behavior, use layoutSizingVertical/Horizontal: FILL on children."
-            },
+            alignItems: { type: "string", enum: ["start", "center", "end", "baseline"] },
             justifyContent: { type: "string", enum: ["start", "center", "end", "space-between"] },
           },
         },
@@ -283,10 +320,7 @@ const TOOLS: Tool[] = [
     inputSchema: {
       type: "object",
       properties: {
-        target: {
-          type: "string",
-          description: "Element to modify (ID, 'selection', or 'name:ElementName')",
-        },
+        target: { type: "string", description: "Element to modify (ID, 'selection', or 'name:ElementName')" },
         name: { type: "string", description: "New name" },
         width: { type: "number", description: "New width" },
         height: { type: "number", description: "New height" },
@@ -310,10 +344,7 @@ const TOOLS: Tool[] = [
     inputSchema: {
       type: "object",
       properties: {
-        target: {
-          type: "string",
-          description: "Element to delete (ID, 'selection', or 'name:ElementName')",
-        },
+        target: { type: "string", description: "Element to delete (ID, 'selection', or 'name:ElementName')" },
       },
       required: ["target"],
     },
@@ -324,14 +355,8 @@ const TOOLS: Tool[] = [
     inputSchema: {
       type: "object",
       properties: {
-        target: {
-          type: "string",
-          description: "Element to move (ID, 'selection', or 'name:ElementName')",
-        },
-        parent: {
-          type: "string",
-          description: "Container to move into (ID, 'selection', or 'name:ContainerName')",
-        },
+        target: { type: "string", description: "Element to move (ID, 'selection', or 'name:ElementName')" },
+        parent: { type: "string", description: "Container to move into (ID, 'selection', or 'name:ContainerName')" },
       },
       required: ["target", "parent"],
     },
@@ -342,16 +367,10 @@ const TOOLS: Tool[] = [
     inputSchema: {
       type: "object",
       properties: {
-        component: {
-          type: "string",
-          description: "Component ID or 'name:ComponentName'",
-        },
+        component: { type: "string", description: "Component ID or 'name:ComponentName'" },
         x: { type: "number", description: "X position" },
         y: { type: "number", description: "Y position" },
-        parent: {
-          type: "string",
-          description: "Parent element to add instance to",
-        },
+        parent: { type: "string", description: "Parent element to add instance to" },
       },
       required: ["component"],
     },
@@ -359,11 +378,7 @@ const TOOLS: Tool[] = [
   {
     name: "figma_selection",
     description: "Get information about the current selection in Figma.",
-    inputSchema: {
-      type: "object",
-      properties: {},
-      required: [],
-    },
+    inputSchema: { type: "object", properties: {}, required: [] },
   },
   {
     name: "figma_query",
@@ -371,10 +386,7 @@ const TOOLS: Tool[] = [
     inputSchema: {
       type: "object",
       properties: {
-        target: {
-          type: "string",
-          description: "Element to query (ID, 'selection', or 'name:ElementName')",
-        },
+        target: { type: "string", description: "Element to query (ID, 'selection', or 'name:ElementName')" },
       },
       required: ["target"],
     },
@@ -385,14 +397,8 @@ const TOOLS: Tool[] = [
     inputSchema: {
       type: "object",
       properties: {
-        target: {
-          type: "string",
-          description: "Element to convert (ID, 'selection', or 'name:ElementName')",
-        },
-        name: {
-          type: "string",
-          description: "Component name (e.g., 'Button/Primary')",
-        },
+        target: { type: "string", description: "Element to convert (ID, 'selection', or 'name:ElementName')" },
+        name: { type: "string", description: "Component name (e.g., 'Button/Primary')" },
       },
       required: ["target"],
     },
@@ -403,19 +409,9 @@ const TOOLS: Tool[] = [
     inputSchema: {
       type: "object",
       properties: {
-        target: {
-          type: "string",
-          description: "Component to create variants from",
-        },
-        property: {
-          type: "string",
-          description: "Variant property name (e.g., 'state', 'size')",
-        },
-        values: {
-          type: "array",
-          items: { type: "string" },
-          description: "Variant values (e.g., ['default', 'hover', 'pressed'])",
-        },
+        target: { type: "string", description: "Component to create variants from" },
+        property: { type: "string", description: "Variant property name (e.g., 'state', 'size')" },
+        values: { type: "array", items: { type: "string" }, description: "Variant values (e.g., ['default', 'hover', 'pressed'])" },
       },
       required: ["target", "property", "values"],
     },
@@ -426,19 +422,9 @@ const TOOLS: Tool[] = [
     inputSchema: {
       type: "object",
       properties: {
-        target: {
-          type: "string",
-          description: "Element to check (ID, 'selection', 'page', or 'name:ElementName')",
-        },
-        level: {
-          type: "string",
-          enum: ["AA", "AAA"],
-          description: "WCAG conformance level",
-        },
-        autoFix: {
-          type: "boolean",
-          description: "Automatically fix issues",
-        },
+        target: { type: "string", description: "Element to check (ID, 'selection', 'page', or 'name:ElementName')" },
+        level: { type: "string", enum: ["AA", "AAA"], description: "WCAG conformance level" },
+        autoFix: { type: "boolean", description: "Automatically fix issues" },
       },
       required: ["target", "level"],
     },
@@ -449,73 +435,14 @@ const TOOLS: Tool[] = [
     inputSchema: {
       type: "object",
       properties: {
-        target: {
-          type: "string",
-          description: "Element to export",
-        },
-        format: {
-          type: "string",
-          enum: ["png", "svg", "pdf", "jpg"],
-          description: "Export format",
-        },
-        scale: {
-          type: "number",
-          description: "Scale factor (default: 1)",
-        },
+        target: { type: "string", description: "Element to export" },
+        format: { type: "string", enum: ["png", "svg", "pdf", "jpg"], description: "Export format" },
+        scale: { type: "number", description: "Scale factor (default: 1)" },
       },
       required: ["target", "format"],
     },
   },
 ];
-
-// Bridge client for communicating with Figma plugin
-class MCPBridgeClient {
-  private baseUrl: string;
-
-  constructor() {
-    this.baseUrl = `http://${BRIDGE_CONFIG.DEFAULT_HOST}:${BRIDGE_CONFIG.DEFAULT_PORT}`;
-  }
-
-  async sendRequest<T>(operation: OperationType, params: Record<string, unknown>): Promise<T> {
-    const request: BridgeRequest = {
-      id: generateRequestId(),
-      operation,
-      params,
-    };
-
-    // Queue the request
-    const queueResponse = await fetch(`${this.baseUrl}/queue`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        operation,
-        params,
-        timeout: BRIDGE_CONFIG.TIMEOUT_MS,
-      }),
-    });
-
-    if (!queueResponse.ok) {
-      throw new Error(`Bridge request failed: ${queueResponse.statusText}`);
-    }
-
-    const result = await queueResponse.json() as { success: boolean; data?: T; error?: string };
-
-    if (!result.success) {
-      throw new Error(result.error || "Unknown error");
-    }
-
-    return result.data as T;
-  }
-
-  async checkHealth(): Promise<boolean> {
-    try {
-      const response = await fetch(`${this.baseUrl}/health`);
-      return response.ok;
-    } catch {
-      return false;
-    }
-  }
-}
 
 // Tool name to operation mapping
 const TOOL_OPERATION_MAP: Record<string, OperationType> = {
@@ -534,20 +461,18 @@ const TOOL_OPERATION_MAP: Record<string, OperationType> = {
   figma_export: "export",
 };
 
-// Create and run the MCP server
+// ============================================================================
+// Main
+// ============================================================================
+
 async function main() {
-  const bridgeClient = new MCPBridgeClient();
+  // Start embedded bridge server
+  const bridge = new EmbeddedBridgeServer();
+  await bridge.start();
 
   const server = new Server(
-    {
-      name: "figma-pilot",
-      version: "0.1.0",
-    },
-    {
-      capabilities: {
-        tools: {},
-      },
-    }
+    { name: "figma-pilot", version: "0.1.0" },
+    { capabilities: { tools: {} } }
   );
 
   // List available tools
@@ -559,18 +484,16 @@ async function main() {
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
 
-    // Check if bridge server is running
-    const isHealthy = await bridgeClient.checkHealth();
+    // Check if bridge/plugin is available
+    const isHealthy = await bridge.checkHealth();
     if (!isHealthy) {
       return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify({
-              error: "Figma bridge server not running. Please run 'figma-pilot serve' first and ensure the Figma plugin is active.",
-            }),
-          },
-        ],
+        content: [{
+          type: "text",
+          text: JSON.stringify({
+            error: "Figma plugin not connected. Please open Figma Desktop and run the figma-pilot plugin.",
+          }),
+        }],
         isError: true,
       };
     }
@@ -578,55 +501,45 @@ async function main() {
     const operation = TOOL_OPERATION_MAP[name];
     if (!operation) {
       return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify({ error: `Unknown tool: ${name}` }),
-          },
-        ],
+        content: [{ type: "text", text: JSON.stringify({ error: `Unknown tool: ${name}` }) }],
         isError: true,
       };
     }
 
     try {
-      // Transform args for specific operations
-      let params = args || {};
-
-      // Handle create-variants values array
-      if (operation === "create-variants" && Array.isArray(params.values)) {
-        // Values already in correct format
-      }
-
-      const result = await bridgeClient.sendRequest(operation, params as Record<string, unknown>);
+      const params = args || {};
+      const result = await bridge.sendRequest(operation, params as Record<string, unknown>);
 
       return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(result, null, 2),
-          },
-        ],
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
       };
     } catch (error) {
       return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify({
-              error: error instanceof Error ? error.message : "Unknown error",
-            }),
-          },
-        ],
+        content: [{
+          type: "text",
+          text: JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
+        }],
         isError: true,
       };
     }
   });
 
-  // Start the server with stdio transport
+  // Cleanup on exit
+  process.on('SIGINT', async () => {
+    await bridge.stop();
+    process.exit(0);
+  });
+
+  process.on('SIGTERM', async () => {
+    await bridge.stop();
+    process.exit(0);
+  });
+
+  // Start the MCP server with stdio transport
   const transport = new StdioServerTransport();
   await server.connect(transport);
 
-  console.error("figma-pilot MCP server running on stdio");
+  console.error("figma-pilot MCP server running (bridge included)");
 }
 
 main().catch(console.error);

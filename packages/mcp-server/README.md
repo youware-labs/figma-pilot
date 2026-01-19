@@ -4,25 +4,7 @@ MCP server that enables AI agents (Claude, etc.) to create and modify Figma desi
 
 ## Quick Start
 
-### 1. Install the Figma Plugin
-
-1. Clone the repo: `git clone https://github.com/anthropics/figma-pilot.git`
-2. In Figma Desktop: **Plugins → Development → Import plugin from manifest**
-3. Select `packages/plugin/manifest.json`
-4. Run the plugin in your Figma file
-
-### 2. Start the Bridge Server
-
-```bash
-# In the cloned repo
-cd figma-pilot
-bun install && bun run build
-bun run cli serve
-```
-
-Keep this running while using the MCP server.
-
-### 3. Configure MCP
+### 1. Configure MCP
 
 **Claude Code:**
 ```bash
@@ -43,6 +25,22 @@ Add to your MCP config file:
 }
 ```
 
+### 2. Install the Figma Plugin
+
+1. Download `figma-pilot-plugin-vX.X.X.zip` from [GitHub Releases](https://github.com/youware-labs/figma-pilot/releases)
+2. Unzip the file
+3. In Figma Desktop: **Plugins → Development → Import plugin from manifest**
+4. Select the `manifest.json` file from the unzipped folder
+5. Run the plugin in your Figma file (Plugins → Development → figma-pilot)
+
+### 3. Start Using
+
+Once the MCP is configured and the Figma plugin is running, you can ask Claude to:
+- "Create a login form in Figma"
+- "Add a navigation bar with logo and menu items"
+- "Change the selected element's color to blue"
+- "Check accessibility and fix any issues"
+
 ## Available Tools
 
 | Tool | Description |
@@ -53,6 +51,7 @@ Add to your MCP config file:
 | `figma_delete` | Delete elements |
 | `figma_query` | Get element details |
 | `figma_selection` | Get current selection |
+| `figma_append` | Move elements into a container |
 | `figma_list_components` | List available components |
 | `figma_instantiate` | Create component instances |
 | `figma_to_component` | Convert to component |
@@ -82,12 +81,22 @@ figma_modify({ target: "selection", fill: "#0066FF", cornerRadius: 8 })
 figma_ensure_accessibility({ target: "page", level: "AA", autoFix: true })
 ```
 
+## How It Works
+
+```
+┌─────────────┐     stdio      ┌─────────────────┐     HTTP      ┌──────────────┐
+│   Claude    │ ◄────────────► │  MCP Server     │ ◄───────────► │ Figma Plugin │
+│   (or AI)   │                │  (with bridge)  │   port 38451  │              │
+└─────────────┘                └─────────────────┘               └──────────────┘
+```
+
+The MCP server includes a built-in HTTP bridge that the Figma plugin connects to. No separate server process needed.
+
 ## Requirements
 
 - Node.js >= 18
 - Figma Desktop app
 - The figma-pilot Figma plugin running
-- Bridge server running (`bun run cli serve`)
 
 ## License
 
