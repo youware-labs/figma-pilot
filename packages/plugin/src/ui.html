@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>figma-pilot Bridge</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      padding: 16px;
+      margin: 0;
+      background: #1e1e1e;
+      color: #fff;
+      font-size: 12px;
+    }
+    h3 {
+      margin: 0 0 12px 0;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      padding: 8px 12px;
+      background: #2a2a2a;
+      border-radius: 6px;
+    }
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #666;
+      flex-shrink: 0;
+    }
+    .dot.waiting { background: #f90; }
+    .dot.connected { background: #0c0; }
+    .dot.error { background: #f00; }
+    .status-text {
+      flex: 1;
+    }
+    .hint {
+      color: #888;
+      font-size: 11px;
+      line-height: 1.4;
+    }
+    .log {
+      background: #2a2a2a;
+      border-radius: 4px;
+      padding: 8px;
+      max-height: 80px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 10px;
+      margin-top: 12px;
+    }
+    .log-entry {
+      margin: 2px 0;
+      color: #aaa;
+      word-break: break-all;
+    }
+    .log-entry.info { color: #6cf; }
+    .log-entry.success { color: #6f6; }
+    .log-entry.error { color: #f66; }
+    .log-entry.warn { color: #fc0; }
+  </style>
+</head>
+<body>
+  <h3>figma-pilot Bridge</h3>
+  <div class="status">
+    <div class="dot waiting" id="statusDot"></div>
+    <div class="status-text">
+      <div id="statusText">Initializing...</div>
+      <div class="hint" id="hintText"></div>
+    </div>
+  </div>
+  <div class="log" id="log"></div>
+
+  <script>
+    var BRIDGE_URL = 'http://localhost:38451';
+    var POLL_INTERVAL = 1000;
+    var pollCount = 0;
+    var isConnected = false;
+
+    var statusDot = document.getElementById('statusDot');
+    var statusText = document.getElementById('statusText');
+    var hintText = document.getElementById('hintText');
+    var logEl = document.getElementById('log');
+
+    function log(message, level) {
+      level = level || 'info';
+      var entry = document.createElement('div');
+      entry.className = 'log-entry ' + level;
+      entry.textContent = message;
+      logEl.appendChild(entry);
+      logEl.scrollTop = logEl.scrollHeight;
+      while (logEl.children.length > 50) {
+        logEl.removeChild(logEl.firstChild);
+      }
+    }
+
+    function setStatus(state, text, hint) {
+      statusDot.className = 'dot ' + state;
+      statusText.textContent = text;
+      hintText.textContent = hint || '';
+    }
+
+    function pollForRequests() {
+      pollCount++;
+
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', BRIDGE_URL + '/poll', true);
+      xhr.setRequestHeader('Accept', 'application/json');
+      xhr.timeout = 5000;
+
+      xhr.onload = function() {
+        if (xhr.status === 200) {
+          try {
+            var data = JSON.parse(xhr.responseText);
+
+            if (!isConnected) {
+              isConnected = true;
+              setStatus('connected', 'Connected to CLI', 'Ready for commands');
+              log('Connected!', 'success');
+            }
+
+            if (data.requests && data.requests.length > 0) {
+              for (var i = 0; i < data.requests.length; i++) {
+                handleBridgeRequest(data.requests[i]);
+              }
+            }
+          } catch (e) {
+            log('Parse error: ' + e.message, 'error');
+          }
+        } else {
+          log('HTTP ' + xhr.status, 'error');
+        }
+        scheduleNextPoll();
+      };
+
+      xhr.onerror = function() {
+        if (isConnected) {
+          isConnected = false;
+          setStatus('waiting', 'Disconnected', 'Run CLI again');
+          log('Connection error', 'error');
+        } else if (pollCount <= 5) {
+          log('Waiting... (poll #' + pollCount + ')', 'warn');
+        }
+        scheduleNextPoll();
+      };
+
+      xhr.ontimeout = function() {
+        log('Timeout', 'warn');
+        scheduleNextPoll();
+      };
+
+      try {
+        xhr.send();
+      } catch (e) {
+        log('Send error: ' + e.message, 'error');
+        scheduleNextPoll();
+      }
+    }
+
+    function scheduleNextPoll() {
+      setTimeout(pollForRequests, POLL_INTERVAL);
+    }
+
+    function handleBridgeRequest(request) {
+      log('Request: ' + request.operation, 'info');
+      parent.postMessage({
+        pluginMessage: {
+          type: 'bridge-request',
+          request: request
+        }
+      }, '*');
+    }
+
+    function sendResponse(response) {
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', BRIDGE_URL + '/response', true);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.onload = function() {
+        log('Response sent', 'success');
+      };
+      xhr.onerror = function() {
+        log('Response failed', 'error');
+      };
+      try {
+        xhr.send(JSON.stringify(response));
+      } catch (e) {
+        log('Send error: ' + e.message, 'error');
+      }
+    }
+
+    window.onmessage = function(event) {
+      var msg = event.data.pluginMessage;
+      if (!msg) return;
+
+      if (msg.type === 'bridge-response') {
+        var response = msg.response;
+        log('Result: ' + (response.success ? 'OK' : response.error), response.success ? 'success' : 'error');
+        sendResponse(response);
+      }
+    };
+
+    // Start
+    setStatus('waiting', 'Waiting for CLI...', 'Run: bun run cli status');
+    log('Bridge: ' + BRIDGE_URL, 'info');
+    pollForRequests();
+  </script>
+</body>
+</html>

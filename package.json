@@ -1,0 +1,23 @@
+{
+  "name": "figma-pilot",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "cli": "bun run --cwd packages/cli src/index.ts",
+    "build:cli": "bun run --cwd packages/cli build",
+    "build:plugin": "bun run --cwd packages/plugin build",
+    "build:mcp": "bun run --cwd packages/mcp-server build",
+    "build": "bun run build:cli && bun run build:plugin && bun run build:mcp",
+    "dev:plugin": "bun run --cwd packages/plugin dev",
+    "install-cli": "bun run build:cli && cd packages/cli && bun link",
+    "install-mcp": "bun run build:mcp && cd packages/mcp-server && bun link"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.1.14",
+    "typescript": "^5.7.2"
+  }
+}

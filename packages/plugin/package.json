@@ -1,0 +1,20 @@
+{
+  "name": "@figma-pilot/plugin",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "build": "bun run build:main && bun run build:ui",
+    "build:main": "bun run scripts/build-main.ts",
+    "build:ui": "bun run scripts/build-ui.ts",
+    "dev": "bun run build --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@figma-pilot/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@figma/plugin-typings": "^1.103.0",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.7.2"
+  }
+}

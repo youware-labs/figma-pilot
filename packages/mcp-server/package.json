@@ -1,0 +1,50 @@
+{
+  "name": "@youware-labs/figma-pilot-mcp",
+  "version": "0.1.0",
+  "description": "MCP server for AI agents to create and modify Figma designs via natural language",
+  "type": "module",
+  "bin": {
+    "figma-pilot-mcp": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "bun build src/index.ts --outfile=dist/index.js --target=node --minify && chmod +x dist/index.js",
+    "dev": "bun run src/index.ts",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "figma",
+    "ai",
+    "design",
+    "model-context-protocol",
+    "claude",
+    "llm"
+  ],
+  "author": "YouWare Labs",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/anthropics/figma-pilot"
+  },
+  "homepage": "https://github.com/anthropics/figma-pilot#readme",
+  "bugs": {
+    "url": "https://github.com/anthropics/figma-pilot/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "devDependencies": {
+    "@figma-pilot/shared": "workspace:*",
+    "@types/bun": "^1.1.14",
+    "@types/node": "^22.10.5",
+    "typescript": "^5.7.2"
+  }
+}

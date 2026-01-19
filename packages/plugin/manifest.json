@@ -1,0 +1,16 @@
+{
+  "name": "figma-pilot",
+  "id": "figma-pilot-ai-cli",
+  "api": "1.0.0",
+  "main": "dist/main.js",
+  "ui": "dist/ui.html",
+  "capabilities": [],
+  "enableProposedApi": false,
+  "editorType": ["figma"],
+  "documentAccess": "dynamic-page",
+  "networkAccess": {
+    "allowedDomains": ["http://localhost:38451"],
+    "reasoning": "Required for CLI bridge communication"
+  },
+  "permissions": ["currentuser"]
+}
