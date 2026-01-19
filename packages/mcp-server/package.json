@@ -1,6 +1,6 @@
 {
   "name": "@youware-labs/figma-pilot-mcp",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "MCP server for AI agents to create and modify Figma designs via natural language",
   "type": "module",
   "bin": {
@@ -29,11 +29,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/anthropics/figma-pilot"
+    "url": "https://github.com/youware-labs/figma-pilot"
   },
-  "homepage": "https://github.com/anthropics/figma-pilot#readme",
+  "homepage": "https://github.com/youware-labs/figma-pilot#readme",
   "bugs": {
-    "url": "https://github.com/anthropics/figma-pilot/issues"
+    "url": "https://github.com/youware-labs/figma-pilot/issues"
   },
   "engines": {
     "node": ">=18.0.0"
