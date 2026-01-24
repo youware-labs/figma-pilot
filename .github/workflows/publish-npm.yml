@@ -48,4 +48,4 @@ jobs:
 
       - name: Publish to npm
         working-directory: packages/mcp-server
-        run: npm publish --access public
+        run: npm publish --access public --provenance
