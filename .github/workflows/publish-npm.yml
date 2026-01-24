@@ -32,6 +32,10 @@ jobs:
       - name: Ensure npm CLI supports OIDC
         run: npm i -g npm@^11.5.1
 
+      - name: Build MCP package
+        working-directory: packages/mcp-server
+        run: npm run build
+
       - name: Verify tag matches package version
         working-directory: packages/mcp-server
         run: |
