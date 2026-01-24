@@ -36,6 +36,9 @@ class EmbeddedBridgeServer {
   private pendingRequests: Map<string, PendingRequest> = new Map();
   private requestQueue: BridgeRequest[] = [];
   private isRunning = false;
+  private lastPollAt: number | null = null;
+  private lastResponseAt: number | null = null;
+  private lastRequestAt: number | null = null;
 
   async start(): Promise<void> {
     if (this.isRunning) return;
@@ -102,6 +105,7 @@ class EmbeddedBridgeServer {
 
     // Plugin polls for requests
     if (url.pathname === '/poll' && req.method === 'GET') {
+      this.lastPollAt = Date.now();
       const requests = [...this.requestQueue];
       this.requestQueue = [];
       res.writeHead(200);
@@ -111,45 +115,48 @@ class EmbeddedBridgeServer {
 
     // Plugin sends responses
     if (url.pathname === '/response' && req.method === 'POST') {
-      let body = '';
-      req.on('data', chunk => body += chunk);
-      req.on('end', () => {
-        try {
-          const response = JSON.parse(body) as BridgeResponse;
-          this.handleResponse(response);
-          res.writeHead(200);
-          res.end(JSON.stringify({ success: true }));
-        } catch {
-          res.writeHead(400);
-          res.end(JSON.stringify({ error: 'Invalid response' }));
-        }
+      this.readJsonBody<BridgeResponse>(req, res).then((response) => {
+        if (!response) return;
+        this.lastResponseAt = Date.now();
+        this.handleResponse(response);
+        res.writeHead(200);
+        res.end(JSON.stringify({ success: true }));
       });
       return;
     }
 
     // Health check
     if (url.pathname === '/health') {
+      const health = this.getHealthSummary();
       res.writeHead(200);
-      res.end(JSON.stringify({
-        status: 'ok',
-        pendingRequests: this.pendingRequests.size,
-        queuedRequests: this.requestQueue.length,
-      }));
+      res.end(JSON.stringify(health));
       return;
     }
 
     // External MCP server queues requests
     if (url.pathname === '/queue' && req.method === 'POST') {
-      let body = '';
-      req.on('data', chunk => body += chunk);
-      req.on('end', async () => {
-        try {
-          const { operation, params, timeout } = JSON.parse(body) as {
-            operation: OperationType;
-            params: Record<string, unknown>;
-            timeout?: number;
-          };
+      this.readJsonBody<{
+        operation: OperationType;
+        params: Record<string, unknown>;
+        timeout?: number;
+      }>(req, res).then(async (body) => {
+        if (!body) return;
 
+        if (this.requestQueue.length >= BRIDGE_CONFIG.MAX_QUEUE) {
+          res.writeHead(429);
+          res.end(JSON.stringify({ success: false, error: 'Bridge queue is full' }));
+          return;
+        }
+        if (this.pendingRequests.size >= BRIDGE_CONFIG.MAX_PENDING) {
+          res.writeHead(429);
+          res.end(JSON.stringify({ success: false, error: 'Too many pending requests' }));
+          return;
+        }
+
+        this.lastRequestAt = Date.now();
+
+        try {
+          const { operation, params, timeout } = body;
           const request: BridgeRequest = {
             id: generateRequestId(),
             operation,
@@ -275,7 +282,7 @@ class EmbeddedBridgeServer {
 
   async checkHealth(): Promise<boolean> {
     if (this.isRunning) {
-      return true;
+      return this.getHealthSummary().pluginConnected;
     }
 
     // Check if external bridge is running
@@ -283,7 +290,9 @@ class EmbeddedBridgeServer {
       const response = await fetch(
         `http://${BRIDGE_CONFIG.DEFAULT_HOST}:${BRIDGE_CONFIG.DEFAULT_PORT}/health`
       );
-      return response.ok;
+      if (!response.ok) return false;
+      const health = await response.json() as { pluginConnected?: boolean };
+      return Boolean(health.pluginConnected);
     } catch {
       return false;
     }
@@ -291,6 +300,63 @@ class EmbeddedBridgeServer {
 
   getIsRunning(): boolean {
     return this.isRunning;
+  }
+
+  private getHealthSummary() {
+    const now = Date.now();
+    const pluginConnected = this.lastPollAt !== null
+      ? (now - this.lastPollAt) <= BRIDGE_CONFIG.HEALTH_TTL_MS
+      : false;
+
+    return {
+      status: 'ok',
+      pluginConnected,
+      pendingRequests: this.pendingRequests.size,
+      queuedRequests: this.requestQueue.length,
+      lastPollAt: this.lastPollAt,
+      lastResponseAt: this.lastResponseAt,
+      lastRequestAt: this.lastRequestAt,
+    };
+  }
+
+  private async readJsonBody<T>(
+    req: IncomingMessage,
+    res: ServerResponse
+  ): Promise<T | null> {
+    return new Promise((resolve) => {
+      let body = '';
+      let size = 0;
+      const maxBytes = BRIDGE_CONFIG.MAX_BODY_BYTES;
+
+      req.on('data', (chunk) => {
+        size += chunk.length;
+        if (size > maxBytes) {
+          res.writeHead(413);
+          res.end(JSON.stringify({ error: 'Payload too large' }));
+          req.destroy();
+          resolve(null);
+          return;
+        }
+        body += chunk;
+      });
+
+      req.on('end', () => {
+        try {
+          const parsed = JSON.parse(body) as T;
+          resolve(parsed);
+        } catch {
+          res.writeHead(400);
+          res.end(JSON.stringify({ error: 'Invalid JSON body' }));
+          resolve(null);
+        }
+      });
+
+      req.on('error', () => {
+        res.writeHead(400);
+        res.end(JSON.stringify({ error: 'Invalid request body' }));
+        resolve(null);
+      });
+    });
   }
 }
 
@@ -483,6 +549,64 @@ const TOOLS: Tool[] = [
     },
   },
   {
+    name: "figma_audit_accessibility",
+    description: "Audit accessibility issues without fixing them.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        target: { type: "string", description: "Element to audit (ID, 'selection', 'page', or 'name:ElementName')" },
+        output: { type: "string", enum: ["json", "text"], description: "Output format (default: json)" },
+      },
+      required: ["target"],
+    },
+  },
+  {
+    name: "figma_bind_token",
+    description: "Bind a design token to a node property.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        target: { type: "string", description: "Element to bind token to (ID, 'selection', or 'name:ElementName')" },
+        property: {
+          type: "string",
+          enum: ["fill", "stroke", "fontSize", "fontFamily", "fontWeight", "cornerRadius", "gap", "padding"],
+          description: "Property to bind",
+        },
+        token: { type: "string", description: "Token name or ID" },
+      },
+      required: ["target", "property", "token"],
+    },
+  },
+  {
+    name: "figma_create_token",
+    description: "Create a new design token.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        collection: { type: "string", description: "Token collection name" },
+        name: { type: "string", description: "Token name" },
+        type: { type: "string", enum: ["COLOR", "NUMBER", "STRING", "BOOLEAN"], description: "Token type" },
+        value: {
+          description: "Token value",
+          anyOf: [{ type: "string" }, { type: "number" }, { type: "boolean" }],
+        },
+      },
+      required: ["collection", "name", "type", "value"],
+    },
+  },
+  {
+    name: "figma_sync_tokens",
+    description: "Import or export design tokens to/from JSON files.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        from: { type: "string", description: "Import from JSON file path" },
+        to: { type: "string", description: "Export to JSON file path" },
+      },
+      required: [],
+    },
+  },
+  {
     name: "figma_export",
     description: "Export elements as images (PNG, SVG, PDF). Use after finishing a request to review a PNG.",
     inputSchema: {
@@ -511,6 +635,10 @@ const TOOL_OPERATION_MAP: Record<string, OperationType> = {
   figma_to_component: "to-component",
   figma_create_variants: "create-variants",
   figma_ensure_accessibility: "ensure-accessibility",
+  figma_audit_accessibility: "audit-a11y",
+  figma_bind_token: "bind-token",
+  figma_create_token: "create-token",
+  figma_sync_tokens: "sync-tokens",
   figma_export: "export",
 };
 
@@ -560,10 +688,7 @@ async function main() {
     }
 
     try {
-      let params = args || {};
-      if (name === "figma_export_png") {
-        params = { ...params, format: "png" };
-      }
+      const params = args || {};
       const result = await bridge.sendRequest(operation, params as Record<string, unknown>);
 
       return {

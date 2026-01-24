@@ -71,6 +71,10 @@ export const BRIDGE_CONFIG = {
   DEFAULT_HOST: 'localhost',
   TIMEOUT_MS: 10000,
   PING_INTERVAL_MS: 5000,
+  HEALTH_TTL_MS: 15000,
+  MAX_QUEUE: 100,
+  MAX_PENDING: 100,
+  MAX_BODY_BYTES: 1_000_000,
 };
 
 // Parse color string to RGBA

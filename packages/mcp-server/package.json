@@ -1,10 +1,10 @@
 {
   "name": "@youware-labs/figma-pilot-mcp",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "MCP server for AI agents to create and modify Figma designs via natural language",
   "type": "module",
   "bin": {
-    "figma-pilot-mcp": "./dist/index.js"
+    "figma-pilot-mcp": "dist/index.js"
   },
   "main": "./dist/index.js",
   "files": [
@@ -42,7 +42,7 @@
     "@modelcontextprotocol/sdk": "^1.0.0"
   },
   "devDependencies": {
-    "@figma-pilot/shared": "workspace:*",
+    "@figma-pilot/shared": "^0.1.0",
     "@types/bun": "^1.1.14",
     "@types/node": "^22.10.5",
     "typescript": "^5.7.2"

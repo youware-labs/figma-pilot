@@ -314,6 +314,56 @@ figma_ensure_accessibility({ target: "selection", level: "AA", autoFix: true })
 figma_ensure_accessibility({ target: "page", level: "AAA", autoFix: true })
 ```
 
+#### `figma_audit_accessibility`
+Audit accessibility without changing the design.
+
+**Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `target` | string | Element to audit (required): ID, "selection", "page", or "name:ElementName" |
+| `output` | string | Output format: "json" or "text" |
+
+```typescript
+// Get a structured report
+figma_audit_accessibility({ target: "page", output: "json" })
+
+// Get a human-readable report
+figma_audit_accessibility({ target: "selection", output: "text" })
+```
+
+### Design Tokens
+
+#### `figma_bind_token`
+Bind a design token to a node property.
+
+```typescript
+figma_bind_token({ target: "selection", property: "fill", token: "colors/primary" })
+figma_bind_token({ target: "name:Button", property: "cornerRadius", token: "radii/sm" })
+```
+
+#### `figma_create_token`
+Create a new design token.
+
+```typescript
+figma_create_token({
+  collection: "colors",
+  name: "primary",
+  type: "COLOR",
+  value: "#2563EB"
+})
+```
+
+#### `figma_sync_tokens`
+Import or export token JSON.
+
+```typescript
+// Import tokens
+figma_sync_tokens({ from: "/path/to/tokens.json" })
+
+// Export tokens
+figma_sync_tokens({ to: "/path/to/tokens.json" })
+```
+
 ### Export
 
 #### `figma_export`
@@ -336,6 +386,26 @@ figma_export({ target: "selection", format: "svg" })
 // Export at 2x scale
 figma_export({ target: "selection", format: "png", scale: 2 })
 ```
+
+## Agent Workflow (Recommended)
+
+Use this flow to keep requests reliable and minimize mis-targeting:
+
+```text
+1) figma_status
+2) (If touching existing nodes) figma_selection or figma_query
+3) (If using components) figma_list_components
+4) figma_create / figma_modify / figma_append
+5) figma_ensure_accessibility or figma_audit_accessibility (when relevant)
+6) figma_export (only after finishing the request)
+```
+
+**Operator rules:**
+- Always name containers you expect to modify later.
+- Prefer `"name:"` targeting over IDs for stability.
+- Use `children` for complex layouts instead of multiple top-level calls.
+- If no selection exists, use `name:` targets or create a container first.
+- Avoid exporting after each micro-step; export once at the end.
 
 ## Common Patterns
 
@@ -895,14 +965,16 @@ figma_create({
 ## Tips for AI Agents
 
 1. **Always call `figma_status()` first** to verify the connection before running other commands
-2. **After finishing a requested change (not every step), export a PNG for review** using `figma_export({ target: "selection", format: "png", scale: 2 })`
-3. **Always specify position** when creating multiple elements to avoid overlap - use `x` and `y` parameters
-4. **Use semantic types** (`card`, `button`, `nav`) when possible - they come pre-styled with auto-layout
-5. **Use nested `children`** for complex layouts instead of creating elements separately
-6. **Use `"selection"` target** for operations on user-selected elements
-7. **Run accessibility checks** after creating UI components with `figma_ensure_accessibility`
-8. **Use `figma_list_components`** to discover existing components before creating instances
-9. **Prefer `"name:"` targeting** over IDs - names are more readable and stable
-10. **Use `textColor` for text elements** instead of `fill` for better clarity
-11. **Use `maxWidth` for long text** to enable automatic text wrapping
-12. **Use `layoutSizingHorizontal: "FILL"`** to make child elements stretch to parent width
+2. **Query before you modify** using `figma_selection()` or `figma_query()` to avoid mis-targeting
+3. **After finishing a requested change (not every step), export a PNG for review** using `figma_export({ target: "selection", format: "png", scale: 2 })`
+4. **Always specify position** when creating multiple elements to avoid overlap - use `x` and `y` parameters
+5. **Use semantic types** (`card`, `button`, `nav`) when possible - they come pre-styled with auto-layout
+6. **Use nested `children`** for complex layouts instead of creating elements separately
+7. **Use `"selection"` target** for operations on user-selected elements
+8. **Run accessibility checks** after creating UI components with `figma_ensure_accessibility` or `figma_audit_accessibility`
+9. **Use `figma_list_components`** to discover existing components before creating instances
+10. **Prefer `"name:"` targeting** over IDs - names are more readable and stable
+11. **Use `textColor` for text elements** instead of `fill` for better clarity
+12. **Use `maxWidth` for long text** to enable automatic text wrapping
+13. **Use `layoutSizingHorizontal: "FILL"`** to make child elements stretch to parent width
+14. **Use tokens for consistency** via `figma_create_token` and `figma_bind_token` when design systems are involved

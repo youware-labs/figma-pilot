@@ -88,6 +88,10 @@ The MCP server includes a built-in HTTP bridge. No separate server process neede
 | `figma_to_component` | Convert selection to component |
 | `figma_create_variants` | Create component variants |
 | `figma_ensure_accessibility` | Check and fix accessibility |
+| `figma_audit_accessibility` | Audit accessibility without fixing |
+| `figma_bind_token` | Bind a design token to a node |
+| `figma_create_token` | Create a design token |
+| `figma_sync_tokens` | Import/export design tokens |
 | `figma_export` | Export as image (use after finishing a request to review PNG) |
 
 ## Development / 开发
