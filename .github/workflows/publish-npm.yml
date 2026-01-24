@@ -4,6 +4,10 @@ on:
   release:
     types: [published]
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -14,7 +18,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           registry-url: https://registry.npmjs.org/
 
       - name: Setup Bun
@@ -24,6 +28,9 @@ jobs:
 
       - name: Install dependencies
         run: bun install
+
+      - name: Ensure npm CLI supports OIDC
+        run: npm i -g npm@^11.5.1
 
       - name: Verify tag matches package version
         working-directory: packages/mcp-server
@@ -37,6 +44,4 @@ jobs:
 
       - name: Publish to npm
         working-directory: packages/mcp-server
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish --access public
