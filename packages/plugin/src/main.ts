@@ -7,7 +7,7 @@ import type { BridgeRequest, BridgeResponse, OperationType } from '@figma-pilot/
 import { handleCreate } from './handlers/create';
 import { handleModify, handleDelete, handleAppend } from './handlers/modify';
 import { handleComponent, handleCreateVariants, handleInstantiate, handleListComponents } from './handlers/component';
-import { handleEnsureAccessibility, handleAuditA11y } from './handlers/accessibility';
+import { handleAccessibility } from './handlers/accessibility';
 import { handleBindToken, handleCreateToken, handleSyncTokens } from './handlers/tokens';
 import { handleExport } from './handlers/export';
 import { serializeNode, getTargetNode } from './utils/serialize';
@@ -46,9 +46,6 @@ async function executeOperation(operation: OperationType, params: unknown): Prom
     case 'status':
       return handleStatus();
 
-    case 'selection':
-      return handleSelection();
-
     case 'query':
       return handleQuery(params as { target: string });
 
@@ -76,11 +73,8 @@ async function executeOperation(operation: OperationType, params: unknown): Prom
     case 'instantiate':
       return handleInstantiate(params as Parameters<typeof handleInstantiate>[0]);
 
-    case 'ensure-accessibility':
-      return handleEnsureAccessibility(params as Parameters<typeof handleEnsureAccessibility>[0]);
-
-    case 'audit-a11y':
-      return handleAuditA11y(params as Parameters<typeof handleAuditA11y>[0]);
+    case 'accessibility':
+      return handleAccessibility(params as Parameters<typeof handleAccessibility>[0]);
 
     case 'bind-token':
       return handleBindToken(params as Parameters<typeof handleBindToken>[0]);
@@ -111,17 +105,19 @@ function handleStatus() {
   };
 }
 
-async function handleSelection() {
-  const nodes = await Promise.all(figma.currentPage.selection.map(node => serializeNode(node)));
-  return { nodes };
-}
-
 async function handleQuery(params: { target: string }) {
+  // Handle selection target - return multiple nodes
+  if (params.target === 'selection') {
+    const nodes = await Promise.all(figma.currentPage.selection.map(node => serializeNode(node, true)));
+    return { nodes, node: nodes[0] || null };
+  }
+  
   const node = await getTargetNode(params.target);
   if (!node) {
-    return { node: null };
+    return { node: null, nodes: [] };
   }
-  return { node: await serializeNode(node, true) };
+  const serialized = await serializeNode(node, true);
+  return { node: serialized, nodes: [serialized] };
 }
 
 // Keep plugin running

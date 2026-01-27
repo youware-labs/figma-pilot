@@ -5,17 +5,18 @@ metadata:
   tags: accessibility, wcag, a11y, contrast
 ---
 
-## figma_ensure_accessibility
+## figma_accessibility
 
-Check and optionally fix accessibility issues.
+Unified accessibility tool - check and optionally fix accessibility issues.
 
 ### Parameters
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `target` | string | Element to check (required): ID, "selection", "page", or "name:ElementName" |
-| `level` | string | WCAG conformance level: "AA" or "AAA" (required) |
-| `autoFix` | boolean | Automatically fix issues |
+| `level` | string | WCAG conformance level: "AA" or "AAA" (default: "AA") |
+| `autoFix` | boolean | Automatically fix issues where possible (default: false) |
+| `output` | string | Output format: "json" or "text" (default: "json") |
 
 ### Checks Performed
 
@@ -25,44 +26,41 @@ Check and optionally fix accessibility issues.
 ### Examples
 
 ```typescript
-// Audit current selection
-figma_ensure_accessibility({ target: "selection", level: "AA" })
+// Audit current selection (read-only check)
+figma_accessibility({ target: "selection" })
 
-// Audit and auto-fix
-figma_ensure_accessibility({ target: "selection", level: "AA", autoFix: true })
+// Audit with AAA level
+figma_accessibility({ target: "selection", level: "AAA" })
 
-// Audit entire page
-figma_ensure_accessibility({ target: "page", level: "AAA", autoFix: true })
+// Audit and auto-fix issues
+figma_accessibility({ target: "selection", level: "AA", autoFix: true })
+
+// Audit entire page with text output
+figma_accessibility({ target: "page", output: "text" })
 ```
 
-## figma_audit_accessibility
-
-Audit accessibility without changing the design.
-
-### Parameters
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `target` | string | Element to audit (required): ID, "selection", "page", or "name:ElementName" |
-| `output` | string | Output format: "json" or "text" |
+### Response
 
 ```typescript
-// Get a structured report
-figma_audit_accessibility({ target: "page", output: "json" })
-
-// Get a human-readable report
-figma_audit_accessibility({ target: "selection", output: "text" })
+{
+  issues: AccessibilityIssue[],
+  totalIssues: number,
+  fixedCount: number,    // Number fixed (if autoFix was true)
+  passed: number,
+  failed: number,
+  warnings: number
+}
 ```
 
 ## Accessibility Workflow
 
 ```typescript
 // 1. Audit the page
-figma_ensure_accessibility({ target: "page", level: "AA" })
+figma_accessibility({ target: "page", level: "AA" })
 
 // 2. Fix issues automatically
-figma_ensure_accessibility({ target: "page", level: "AA", autoFix: true })
+figma_accessibility({ target: "page", level: "AA", autoFix: true })
 
 // 3. Verify fixes
-figma_ensure_accessibility({ target: "page", level: "AA" })
+figma_accessibility({ target: "page", level: "AA" })
 ```

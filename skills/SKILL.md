@@ -19,14 +19,12 @@ Read individual rule files for detailed explanations and code examples:
 
 ### Connection & Query Tools
 - [rules/status.md](rules/status.md) - Check connection status to Figma plugin
-- [rules/selection.md](rules/selection.md) - Get current selection information
-- [rules/query.md](rules/query.md) - Query elements by ID, name, or selection
+- [rules/query.md](rules/query.md) - Query elements by ID, name, or selection (also returns selection info)
 - [rules/list-components.md](rules/list-components.md) - List available components in the file
 
 ### Creating Elements
-- [rules/create.md](rules/create.md) - Create elements (frames, text, shapes, semantic types)
+- [rules/create.md](rules/create.md) - Create elements (frames, text, shapes, semantic types, nested layouts)
 - [rules/layout.md](rules/layout.md) - Auto-layout configuration and patterns
-- [rules/nested-children.md](rules/nested-children.md) - Complex nested layouts with children
 
 ### Modifying Elements
 - [rules/modify.md](rules/modify.md) - Modify existing element properties

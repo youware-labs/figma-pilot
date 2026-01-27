@@ -3,74 +3,29 @@
  */
 
 import type {
-  EnsureAccessibilityParams,
-  EnsureAccessibilityResult,
-  AuditA11yParams,
-  AuditA11yResult,
+  AccessibilityParams,
+  AccessibilityResult,
   AccessibilityIssue,
 } from '@figma-pilot/shared';
 import { A11Y_CONSTANTS } from '@figma-pilot/shared';
 import { getTargetNodes, findTextNodes, findInteractiveNodes } from '../utils/serialize';
 
-export async function handleEnsureAccessibility(
-  params: EnsureAccessibilityParams
-): Promise<EnsureAccessibilityResult> {
+/**
+ * Unified accessibility handler - checks and optionally fixes accessibility issues
+ */
+export async function handleAccessibility(
+  params: AccessibilityParams
+): Promise<AccessibilityResult> {
   const nodes = await getTargetNodes(params.target);
   if (nodes.length === 0) {
     throw new Error(`No nodes found: ${params.target}`);
   }
 
-  const allIssues: AccessibilityIssue[] = [];
-  let fixedCount = 0;
-
-  for (const rootNode of nodes) {
-    // Check text contrast
-    const textNodes = findTextNodes(rootNode);
-    for (const textNode of textNodes) {
-      const issue = await checkTextContrast(textNode, params.level);
-      if (issue) {
-        if (params.autoFix) {
-          const fixed = await fixTextContrast(textNode, params.level);
-          if (fixed) {
-            issue.fixed = true;
-            fixedCount++;
-          }
-        }
-        allIssues.push(issue);
-      }
-    }
-
-    // Check touch target sizes
-    const interactiveNodes = findInteractiveNodes(rootNode);
-    for (const node of interactiveNodes) {
-      const issue = checkTouchTarget(node);
-      if (issue) {
-        if (params.autoFix) {
-          const fixed = await fixTouchTarget(node);
-          if (fixed) {
-            issue.fixed = true;
-            fixedCount++;
-          }
-        }
-        allIssues.push(issue);
-      }
-    }
-  }
-
-  return {
-    issues: allIssues,
-    fixedCount,
-    totalIssues: allIssues.length,
-  };
-}
-
-export async function handleAuditA11y(params: AuditA11yParams): Promise<AuditA11yResult> {
-  const nodes = await getTargetNodes(params.target);
-  if (nodes.length === 0) {
-    throw new Error(`No nodes found: ${params.target}`);
-  }
-
+  const level = params.level || 'AA';
+  const autoFix = params.autoFix || false;
+  
   const issues: AccessibilityIssue[] = [];
+  let fixedCount = 0;
   let passed = 0;
   let failed = 0;
   let warnings = 0;
@@ -79,8 +34,15 @@ export async function handleAuditA11y(params: AuditA11yParams): Promise<AuditA11
     // Check text contrast
     const textNodes = findTextNodes(rootNode);
     for (const textNode of textNodes) {
-      const issue = await checkTextContrast(textNode, 'AA');
+      const issue = await checkTextContrast(textNode, level);
       if (issue) {
+        if (autoFix) {
+          const fixed = await fixTextContrast(textNode, level);
+          if (fixed) {
+            issue.fixed = true;
+            fixedCount++;
+          }
+        }
         issues.push(issue);
         if (issue.severity === 'error') failed++;
         else warnings++;
@@ -94,6 +56,13 @@ export async function handleAuditA11y(params: AuditA11yParams): Promise<AuditA11
     for (const node of interactiveNodes) {
       const issue = checkTouchTarget(node);
       if (issue) {
+        if (autoFix) {
+          const fixed = await fixTouchTarget(node);
+          if (fixed) {
+            issue.fixed = true;
+            fixedCount++;
+          }
+        }
         issues.push(issue);
         if (issue.severity === 'error') failed++;
         else warnings++;
@@ -105,6 +74,8 @@ export async function handleAuditA11y(params: AuditA11yParams): Promise<AuditA11
 
   return {
     issues,
+    totalIssues: issues.length,
+    fixedCount,
     passed,
     failed,
     warnings,

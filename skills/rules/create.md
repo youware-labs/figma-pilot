@@ -81,6 +81,8 @@ figma_create({ type: "text", content: "Hello", parent: "123:456" })
 
 ### Complex Nested Layout
 
+Use the `children` parameter to create complex nested layouts in a single call.
+
 ```typescript
 figma_create({
   type: "frame",
@@ -110,3 +112,9 @@ figma_create({
   ]
 })
 ```
+
+**Best Practices for Nested Layouts:**
+- Use `children` for complex layouts instead of multiple top-level calls
+- Each child can have its own `children` for deep nesting
+- Name important containers for easy targeting later
+- Use auto-layout on parent frames for proper alignment

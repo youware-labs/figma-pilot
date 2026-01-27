@@ -159,8 +159,7 @@ Export the current selection as a PNG at 2x scale
 | Tool | Description |
 |------|-------------|
 | `figma_status` | Check connection status to Figma plugin |
-| `figma_selection` | Get information about current selection |
-| `figma_query` | Query element by ID or name |
+| `figma_query` | Query elements by ID, name, or selection |
 | `figma_create` | Create elements (frame, text, rectangle, button, card, etc.) |
 | `figma_modify` | Modify element properties |
 | `figma_delete` | Delete elements |
@@ -169,8 +168,7 @@ Export the current selection as a PNG at 2x scale
 | `figma_instantiate` | Create component instance |
 | `figma_to_component` | Convert selection to component |
 | `figma_create_variants` | Create component variants |
-| `figma_ensure_accessibility` | Check and fix accessibility issues |
-| `figma_audit_accessibility` | Audit accessibility without fixing |
+| `figma_accessibility` | Check and optionally fix accessibility issues (WCAG) |
 | `figma_bind_token` | Bind a design token to a node |
 | `figma_create_token` | Create a design token |
 | `figma_sync_tokens` | Import/export design tokens |

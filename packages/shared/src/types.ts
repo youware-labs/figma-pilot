@@ -25,7 +25,6 @@ export interface BridgeResponse {
 
 export type OperationType =
   | 'status'
-  | 'selection'
   | 'query'
   | 'create'
   | 'modify'
@@ -35,8 +34,7 @@ export type OperationType =
   | 'to-component'
   | 'create-variants'
   | 'instantiate'
-  | 'ensure-accessibility'
-  | 'audit-a11y'
+  | 'accessibility'
   | 'bind-token'
   | 'create-token'
   | 'sync-tokens'
@@ -44,7 +42,6 @@ export type OperationType =
 
 export type OperationParams =
   | StatusParams
-  | SelectionParams
   | QueryParams
   | CreateParams
   | ModifyParams
@@ -54,8 +51,7 @@ export type OperationParams =
   | ToComponentParams
   | CreateVariantsParams
   | InstantiateParams
-  | EnsureAccessibilityParams
-  | AuditA11yParams
+  | AccessibilityParams
   | BindTokenParams
   | CreateTokenParams
   | SyncTokensParams
@@ -67,10 +63,8 @@ export type OperationParams =
 
 export interface StatusParams {}
 
-export interface SelectionParams {}
-
 export interface QueryParams {
-  target: string; // nodeId or 'selection'
+  target: string; // nodeId, 'selection', or 'name:ElementName'
 }
 
 export interface CreateParams {
@@ -285,16 +279,17 @@ export interface InstantiateParams {
   parent?: string; // Parent node ID, "selection", or "name:ParentName"
 }
 
-export interface EnsureAccessibilityParams {
+// Unified accessibility params (replaces EnsureAccessibilityParams and AuditA11yParams)
+export interface AccessibilityParams {
   target: string;
-  level: 'AA' | 'AAA';
-  autoFix?: boolean;
+  level?: 'AA' | 'AAA'; // WCAG level, default: 'AA'
+  autoFix?: boolean; // If true, automatically fix issues
+  output?: 'json' | 'text'; // Output format, default: 'json'
 }
 
-export interface AuditA11yParams {
-  target: string;
-  output?: 'json' | 'text';
-}
+// Legacy aliases for backward compatibility
+export type EnsureAccessibilityParams = AccessibilityParams;
+export type AuditA11yParams = AccessibilityParams;
 
 export interface BindTokenParams {
   target: string;
@@ -342,13 +337,13 @@ export interface StatusResult {
   currentPage?: string;
 }
 
-export interface SelectionResult {
-  nodes: NodeInfo[];
-}
-
 export interface QueryResult {
   node: NodeInfo | null;
+  nodes: NodeInfo[]; // For selection target, returns all selected nodes
 }
+
+// Legacy alias for backward compatibility
+export type SelectionResult = QueryResult;
 
 export interface NodeInfo {
   id: string;
@@ -432,18 +427,19 @@ export interface AccessibilityIssue {
   fixed?: boolean;
 }
 
-export interface EnsureAccessibilityResult {
+// Unified accessibility result
+export interface AccessibilityResult {
   issues: AccessibilityIssue[];
-  fixedCount: number;
   totalIssues: number;
-}
-
-export interface AuditA11yResult {
-  issues: AccessibilityIssue[];
+  fixedCount: number; // Number of issues fixed (if autoFix was true)
   passed: number;
   failed: number;
   warnings: number;
 }
+
+// Legacy aliases for backward compatibility
+export type EnsureAccessibilityResult = AccessibilityResult;
+export type AuditA11yResult = AccessibilityResult;
 
 export interface BindTokenResult {
   nodeId: string;

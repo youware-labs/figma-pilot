@@ -1,21 +1,22 @@
 /**
- * Query command - get information about a specific element
+ * Query command - get information about elements
+ * Supports querying by ID, name, or current selection
  */
 
 import { defineCommand } from 'citty';
 import { sendRequest, bridgeClient } from '../bridge/client';
 import type { QueryResult } from '@figma-pilot/shared';
-import { output, error, info } from '../utils/output';
+import { output, error, info, formatNodeInfo } from '../utils/output';
 
 export const queryCommand = defineCommand({
   meta: {
     name: 'query',
-    description: 'Query information about an element',
+    description: 'Query information about elements (by ID, name, or selection)',
   },
   args: {
     target: {
       type: 'string',
-      description: 'Node ID or "selection" for current selection',
+      description: 'Element to query: ID, "selection", or "name:ElementName"',
       required: true,
     },
     json: {
@@ -34,10 +35,20 @@ export const queryCommand = defineCommand({
 
       if (args.json) {
         output(result);
-      } else if (!result.node) {
-        info('Node not found');
-      } else {
+      } else if (result.nodes.length === 0) {
+        if (args.target === 'selection') {
+          info('No elements selected');
+        } else {
+          info('Node not found');
+        }
+      } else if (result.nodes.length === 1) {
         output(result.node);
+      } else {
+        // Multiple nodes (selection)
+        console.log(`Found ${result.nodes.length} element(s):`);
+        for (const node of result.nodes) {
+          console.log(`  ${formatNodeInfo(node)}`);
+        }
       }
     } catch (err) {
       error('Failed to query element', (err as Error).message);

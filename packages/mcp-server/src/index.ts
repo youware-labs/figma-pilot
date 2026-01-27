@@ -499,17 +499,12 @@ const TOOLS: Tool[] = [
     },
   },
   {
-    name: "figma_selection",
-    description: "Get information about the current selection in Figma.",
-    inputSchema: { type: "object", properties: {}, required: [] },
-  },
-  {
     name: "figma_query",
-    description: "Get detailed information about a specific element.",
+    description: "Get detailed information about elements. Use target 'selection' to query currently selected elements (returns multiple nodes).",
     inputSchema: {
       type: "object",
       properties: {
-        target: { type: "string", description: "Element to query (ID, 'selection', or 'name:ElementName')" },
+        target: { type: "string", description: "Element to query (ID, 'selection', or 'name:ElementName'). Use 'selection' to get all selected elements." },
       },
       required: ["target"],
     },
@@ -540,25 +535,14 @@ const TOOLS: Tool[] = [
     },
   },
   {
-    name: "figma_ensure_accessibility",
-    description: "Check and optionally fix accessibility issues.",
+    name: "figma_accessibility",
+    description: "Check accessibility issues and optionally fix them. Performs WCAG compliance checking for contrast ratios and touch targets.",
     inputSchema: {
       type: "object",
       properties: {
         target: { type: "string", description: "Element to check (ID, 'selection', 'page', or 'name:ElementName')" },
-        level: { type: "string", enum: ["AA", "AAA"], description: "WCAG conformance level" },
-        autoFix: { type: "boolean", description: "Automatically fix issues" },
-      },
-      required: ["target", "level"],
-    },
-  },
-  {
-    name: "figma_audit_accessibility",
-    description: "Audit accessibility issues without fixing them.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        target: { type: "string", description: "Element to audit (ID, 'selection', 'page', or 'name:ElementName')" },
+        level: { type: "string", enum: ["AA", "AAA"], description: "WCAG conformance level (default: AA)" },
+        autoFix: { type: "boolean", description: "Automatically fix issues where possible (default: false)" },
         output: { type: "string", enum: ["json", "text"], description: "Output format (default: json)" },
       },
       required: ["target"],
@@ -634,12 +618,10 @@ const TOOL_OPERATION_MAP: Record<string, OperationType> = {
   figma_delete: "delete",
   figma_append: "append",
   figma_instantiate: "instantiate",
-  figma_selection: "selection",
   figma_query: "query",
   figma_to_component: "to-component",
   figma_create_variants: "create-variants",
-  figma_ensure_accessibility: "ensure-accessibility",
-  figma_audit_accessibility: "audit-a11y",
+  figma_accessibility: "accessibility",
   figma_bind_token: "bind-token",
   figma_create_token: "create-token",
   figma_sync_tokens: "sync-tokens",
