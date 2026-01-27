@@ -34,7 +34,7 @@ export function validateCreateParams(params: unknown): CreateParams {
     p.children = p.children.map(child => validateCreateParams(child));
   }
 
-  return p as CreateParams;
+  return p as unknown as CreateParams;
 }
 
 /**

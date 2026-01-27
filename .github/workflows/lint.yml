@@ -40,7 +40,7 @@ jobs:
 
       - name: Verify no build errors
         run: |
-          if [ ! -f "packages/cli/dist/index.js" ] || [ ! -f "packages/plugin/code.js" ] || [ ! -f "packages/mcp-server/dist/index.js" ]; then
+          if [ ! -f "packages/cli/dist/index.js" ] || [ ! -f "packages/plugin/dist/main.js" ] || [ ! -f "packages/mcp-server/dist/index.js" ]; then
             echo "Build failed: missing output files"
             exit 1
           fi

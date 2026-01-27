@@ -35,5 +35,5 @@ jobs:
       - name: Verify build outputs
         run: |
           test -f packages/cli/dist/index.js || (echo "CLI build failed" && exit 1)
-          test -f packages/plugin/code.js || (echo "Plugin build failed" && exit 1)
+          test -f packages/plugin/dist/main.js || (echo "Plugin build failed" && exit 1)
           test -f packages/mcp-server/dist/index.js || (echo "MCP server build failed" && exit 1)

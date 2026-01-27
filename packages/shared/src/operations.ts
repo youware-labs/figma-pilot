@@ -147,7 +147,8 @@ export function layoutToFigma(layout: LayoutConfig) {
     result.counterAxisAlignItems = alignMap[layout.alignItems] ?? 'MIN';
 
     // Flag for child sizing (handled in createFrame)
-    if (layout.alignItems === 'stretch') {
+    // Check for stretch at runtime (even though TypeScript type doesn't include it)
+    if ((layout.alignItems as string) === 'stretch') {
       result._stretchChildren = true;
     }
   }

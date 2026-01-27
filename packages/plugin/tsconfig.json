@@ -2,7 +2,7 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "target": "ES2015",
-    "lib": ["ES2015", "DOM"],
+    "lib": ["ES2017", "DOM"],
     "outDir": "./dist",
     "rootDir": "./src",
     "types": ["@figma/plugin-typings"]

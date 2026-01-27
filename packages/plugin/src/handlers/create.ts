@@ -191,12 +191,12 @@ async function createFrame(
   // Apply gradient fill (overrides solid fill)
   if (params.gradient) {
     const gradientPaint = gradientToFigma(params.gradient, frame.width, frame.height);
-    frame.fills = [gradientPaint as Paint];
+    frame.fills = [gradientPaint as unknown as Paint];
   }
 
   // Apply effects (shadows, blur)
   if (params.effects && params.effects.length > 0) {
-    frame.effects = params.effects.map(effect => effectToFigma(effect) as Effect);
+    frame.effects = params.effects.map(effect => effectToFigma(effect) as unknown as Effect);
   }
 
   // Apply rotation
@@ -378,7 +378,7 @@ async function createText(
 
   // Apply effects (shadows, blur)
   if (params.effects && params.effects.length > 0) {
-    text.effects = params.effects.map(effect => effectToFigma(effect) as Effect);
+    text.effects = params.effects.map(effect => effectToFigma(effect) as unknown as Effect);
   }
 
   if (params.x !== undefined) text.x = params.x;
@@ -410,7 +410,7 @@ async function createRectangle(
   // Apply gradient fill (overrides solid fill)
   if (params.gradient) {
     const gradientPaint = gradientToFigma(params.gradient, rect.width, rect.height);
-    rect.fills = [gradientPaint as Paint];
+    rect.fills = [gradientPaint as unknown as Paint];
   }
 
   // Apply stroke
@@ -449,7 +449,7 @@ async function createRectangle(
 
   // Apply effects
   if (params.effects && params.effects.length > 0) {
-    rect.effects = params.effects.map(effect => effectToFigma(effect) as Effect);
+    rect.effects = params.effects.map(effect => effectToFigma(effect) as unknown as Effect);
   }
 
   // Apply rotation
@@ -496,7 +496,7 @@ async function createEllipse(
   // Apply gradient fill (overrides solid fill)
   if (params.gradient) {
     const gradientPaint = gradientToFigma(params.gradient, ellipse.width, ellipse.height);
-    ellipse.fills = [gradientPaint as Paint];
+    ellipse.fills = [gradientPaint as unknown as Paint];
   }
 
   // Apply stroke
@@ -518,7 +518,7 @@ async function createEllipse(
 
   // Apply effects
   if (params.effects && params.effects.length > 0) {
-    ellipse.effects = params.effects.map(effect => effectToFigma(effect) as Effect);
+    ellipse.effects = params.effects.map(effect => effectToFigma(effect) as unknown as Effect);
   }
 
   // Apply rotation
@@ -583,7 +583,7 @@ async function createLine(
 
   // Apply effects
   if (params.effects && params.effects.length > 0) {
-    line.effects = params.effects.map(effect => effectToFigma(effect) as Effect);
+    line.effects = params.effects.map(effect => effectToFigma(effect) as unknown as Effect);
   }
 
   // Apply constraints

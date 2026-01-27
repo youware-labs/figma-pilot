@@ -155,8 +155,10 @@ export async function handleModify(params: ModifyParams): Promise<ModifyResult> 
       await figma.loadFontAsync(textNode.fontName as FontName);
     }
     const color = parseColor(params.textColor);
-    textNode.fills = [{ type: 'SOLID', color: { r: color.r, g: color.g, b: color.b }, opacity: color.a }];
-    modified.push('textColor');
+    if (color) {
+      textNode.fills = [{ type: 'SOLID', color: { r: color.r, g: color.g, b: color.b }, opacity: color.a }];
+      modified.push('textColor');
+    }
   }
 
   // Layout

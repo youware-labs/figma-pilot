@@ -155,7 +155,7 @@ export const createCommand = defineCommand({
         }
       }
 
-      params = mergeParams(params, cliParams);
+      params = mergeParams(params as unknown as Record<string, unknown>, cliParams) as unknown as CreateParams;
 
       await bridgeClient.start();
 

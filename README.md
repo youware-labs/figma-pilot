@@ -10,17 +10,43 @@
 
 figma-pilot is an MCP (Model Context Protocol) server that allows AI agents like Claude, Gemini, and other LLMs to directly interact with Figma design files. Create layouts, modify components, check accessibility, and export designs—all through natural language commands.
 
-## ✨ Features
+## Why figma-pilot
 
-- 🎨 **Natural Language Design** - Create and modify Figma designs using plain English
-- 🔌 **Universal MCP Support** - Works with any MCP-compatible client: Claude Desktop, Claude Code, Cursor, Codex, and more
-- 🧩 **Component Support** - Create, instantiate, and manage Figma components
-- ♿ **Accessibility Tools** - Built-in WCAG compliance checking and auto-fixing
-- 🎯 **Design Tokens** - Create and bind design tokens for consistent styling
-- 📦 **Semantic Types** - Pre-styled components like `card`, `button`, `nav`, `form`
-- 🚀 **Auto-layout** - Automatic layout management with gap, padding, and alignment
+Unlike other Figma automation tools, figma-pilot is **designed specifically for AI agents**:
 
-## 🚀 Quick Start
+| Feature | figma-pilot | Traditional Figma APIs |
+|---------|-------------|----------------------|
+| **Semantic Operations** | High-level commands like `create card`, `create button` with auto-layout | Low-level node manipulation |
+| **LLM-Optimized** | Tool schemas designed for natural language understanding | Technical API requiring precise parameters |
+| **Target by Name** | `target: "name:Header"` - human-readable element targeting | Requires exact node IDs |
+| **Built-in Presets** | Semantic types (`card`, `button`, `nav`, `form`) with sensible defaults | Must specify every property |
+| **Nested Creation** | Create complex hierarchies in a single call with `children` | Multiple sequential API calls |
+| **Accessibility First** | Built-in WCAG checking and auto-fixing | Manual implementation required |
+
+### Key Differentiators
+
+1. **Semantic API Design**: Instead of low-level Figma node manipulation, figma-pilot provides high-level operations that match how designers think. Create a "card" or "navigation bar" rather than manually constructing frames with specific properties.
+
+2. **Universal MCP Support**: Works with any MCP-compatible AI client—Claude Desktop, Claude Code, Cursor, Codex, and more. One integration, all platforms.
+
+3. **Zero Configuration Bridge**: The MCP server includes a built-in HTTP bridge. No separate server processes, no complex setup. Just install and connect.
+
+4. **AI-Native Targeting**: Target elements by name (`"name:Hero Section"`) instead of cryptic node IDs. The AI can reference elements the same way a human would describe them.
+
+5. **Declarative Nested Layouts**: Create complex component hierarchies in a single operation using the `children` parameter, rather than making dozens of sequential API calls.
+
+## Features
+
+- **Natural Language Design** - Create and modify Figma designs using plain English
+- **Universal MCP Support** - Works with any MCP-compatible client: Claude Desktop, Claude Code, Cursor, Codex, and more
+- **Component Support** - Create, instantiate, and manage Figma components
+- **Accessibility Tools** - Built-in WCAG compliance checking and auto-fixing
+- **Design Tokens** - Create and bind design tokens for consistent styling
+- **Semantic Types** - Pre-styled components like `card`, `button`, `nav`, `form`
+- **Auto-layout** - Automatic layout management with gap, padding, and alignment
+- **Font Control** - Full typography support with custom fonts, weights, and styles
+
+## Quick Start
 
 ### Prerequisites
 
@@ -78,9 +104,9 @@ Add to your MCP config file (location varies by client):
 
 1. Download `figma-pilot-plugin-vX.X.X.zip` from [GitHub Releases](https://github.com/youware-labs/figma-pilot/releases)
 2. Unzip the file
-3. In Figma Desktop: **Plugins → Development → Import plugin from manifest...**
+3. In Figma Desktop: **Plugins > Development > Import plugin from manifest...**
 4. Select `manifest.json` from the unzipped folder
-5. Run the plugin: **Plugins → Development → figma-pilot**
+5. Run the plugin: **Plugins > Development > figma-pilot**
 
 #### 3. Verify Connection
 
@@ -95,7 +121,7 @@ npx @youware-labs/figma-pilot-mcp
 # Then in another terminal or via MCP client, call figma_status
 ```
 
-## 📖 Usage Examples
+## Usage Examples
 
 ### Creating a Card Component
 
@@ -128,7 +154,7 @@ After completing a design, export it for review:
 Export the current selection as a PNG at 2x scale
 ```
 
-## 🛠️ Available MCP Tools
+## Available MCP Tools
 
 | Tool | Description |
 |------|-------------|
@@ -152,7 +178,7 @@ Export the current selection as a PNG at 2x scale
 
 For detailed tool documentation, see [skills/SKILL.md](./skills/SKILL.md).
 
-## 🔌 Supported MCP Clients
+## Supported MCP Clients
 
 figma-pilot is designed to work with any client that supports the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/). Here are some popular clients:
 
@@ -160,7 +186,7 @@ figma-pilot is designed to work with any client that supports the [Model Context
 |--------|----------------|--------------|
 | **Claude Desktop** | `~/.config/claude/claude_desktop_config.json` (macOS/Linux)<br>`%APPDATA%\Claude\claude_desktop_config.json` (Windows) | [Claude Desktop MCP](https://claude.ai/docs/mcp) |
 | **Claude Code** | Via CLI: `claude mcp add` | [Claude Code Docs](https://claude.ai/code) |
-| **Cursor** | `~/.cursor/mcp.json` or Settings → MCP | [Cursor MCP Docs](https://cursor.sh/docs/mcp) |
+| **Cursor** | `~/.cursor/mcp.json` or Settings > MCP | [Cursor MCP Docs](https://cursor.sh/docs/mcp) |
 | **Codex** | Varies by installation | Check Codex documentation |
 | **Other MCP Clients** | Varies | Check your client's MCP documentation |
 
@@ -177,12 +203,12 @@ All clients use the same configuration format:
 }
 ```
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 ┌─────────────┐     stdio      ┌─────────────────┐     HTTP      ┌──────────────┐
-│ MCP Client  │ ◄────────────► │  MCP Server     │ ◄───────────► │ Figma Plugin │
-│(Claude/Cursor│                │  (with bridge)  │   port 38451  │              │
+│ MCP Client  │ <------------> │  MCP Server     │ <-----------> │ Figma Plugin │
+│(Claude/Cursor               │  (with bridge)  │   port 38451  │              │
 │  /Codex/etc)│                └─────────────────┘               └──────────────┘
 └─────────────┘
 ```
@@ -196,7 +222,7 @@ The MCP server includes a built-in HTTP bridge that the Figma plugin connects to
 - **CLI** (`packages/cli`) - Command-line interface for direct Figma operations
 - **Shared** (`packages/shared`) - Shared TypeScript types and utilities
 
-## 🧪 Development
+## Development
 
 ### Project Structure
 
@@ -246,7 +272,7 @@ bun run dev:plugin
 
 Then import the plugin from `packages/plugin/manifest.json` in Figma Desktop.
 
-## 📦 Creating a Release
+## Creating a Release
 
 ```bash
 # Build everything
@@ -266,7 +292,7 @@ gh release create v0.1.6 dist/releases/figma-pilot-plugin-v0.1.6.zip \
   --notes "Release notes here"
 ```
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Plugin Not Connecting
 
@@ -305,22 +331,20 @@ curl -fsSL https://bun.sh/install | bash
 
 Or use npm/yarn, but you may need to adjust build scripts.
 
-## 🤝 Contributing
+## Contributing
 
-We welcome contributions! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
+We welcome contributions. Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
 
-## 📚 Documentation
+## Documentation
 
 - [skills/SKILL.md](./skills/SKILL.md) - Complete API reference for AI agents
 - [CONTRIBUTING.md](./CONTRIBUTING.md) - Contribution guidelines
-- [CHANGELOG.md](./CHANGELOG.md) - Version history
-- [SECURITY.md](./SECURITY.md) - Security policy
 
-## 📄 License
+## License
 
 MIT License - see [LICENSE](./LICENSE) for details.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 Built with:
 - [Model Context Protocol](https://modelcontextprotocol.io/)
@@ -329,4 +353,4 @@ Built with:
 
 ---
 
-**Made with ❤️ by [YouWare Labs](https://github.com/youware-labs)**
+**[YouWare Labs](https://github.com/youware-labs)**

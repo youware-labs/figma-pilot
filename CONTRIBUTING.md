@@ -4,7 +4,7 @@ Thank you for your interest in contributing to figma-pilot! This document provid
 
 ## Code of Conduct
 
-By participating in this project, you agree to abide by our [Code of Conduct](./CODE_OF_CONDUCT.md).
+We expect all contributors to be respectful and professional. Harassment, discrimination, and inappropriate behavior will not be tolerated.
 
 ## How Can I Contribute?
 
@@ -208,8 +208,7 @@ When adding new features or fixing bugs:
 Releases are managed by maintainers. When a release is ready:
 
 1. Update version numbers in `package.json` files
-2. Update CHANGELOG.md
-3. Create a git tag
+2. Create a git tag
 4. Build and publish to npm
 5. Create a GitHub release
 

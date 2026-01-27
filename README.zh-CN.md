@@ -10,17 +10,43 @@
 
 figma-pilot 是一个 MCP（模型上下文协议）服务器，允许 Claude、Gemini 等 AI 代理直接与 Figma 设计文件交互。通过自然语言命令创建布局、修改组件、检查无障碍性并导出设计。
 
-## ✨ 特性
+## 为什么选择 figma-pilot
 
-- 🎨 **自然语言设计** - 使用纯英文创建和修改 Figma 设计
-- 🔌 **通用 MCP 支持** - 与任何 MCP 兼容客户端配合使用：Claude Desktop、Claude Code、Cursor、Codex 等
-- 🧩 **组件支持** - 创建、实例化和管理 Figma 组件
-- ♿ **无障碍工具** - 内置 WCAG 合规性检查和自动修复
-- 🎯 **设计令牌** - 创建和绑定设计令牌以实现一致的样式
-- 📦 **语义类型** - 预样式组件如 `card`、`button`、`nav`、`form`
-- 🚀 **自动布局** - 自动布局管理，包括间距、内边距和对齐
+与其他 Figma 自动化工具不同，figma-pilot **专为 AI 代理设计**：
 
-## 🚀 快速开始
+| 特性 | figma-pilot | 传统 Figma API |
+|-----|-------------|---------------|
+| **语义化操作** | 高级命令如 `create card`、`create button`，自带自动布局 | 低级节点操作 |
+| **LLM 优化** | 专为自然语言理解设计的工具模式 | 需要精确参数的技术 API |
+| **按名称定位** | `target: "name:Header"` - 人类可读的元素定位 | 需要精确的节点 ID |
+| **内置预设** | 语义类型（`card`、`button`、`nav`、`form`）带有合理默认值 | 必须指定每个属性 |
+| **嵌套创建** | 使用 `children` 在单次调用中创建复杂层次结构 | 需要多次顺序 API 调用 |
+| **无障碍优先** | 内置 WCAG 检查和自动修复 | 需要手动实现 |
+
+### 核心差异化优势
+
+1. **语义化 API 设计**：figma-pilot 提供高级操作，与设计师的思维方式相匹配，而非低级的 Figma 节点操作。创建"卡片"或"导航栏"，而不是手动构建具有特定属性的框架。
+
+2. **通用 MCP 支持**：与任何 MCP 兼容的 AI 客户端配合使用——Claude Desktop、Claude Code、Cursor、Codex 等。一次集成，全平台通用。
+
+3. **零配置桥接**：MCP 服务器包含内置 HTTP 桥接。无需单独的服务器进程，无需复杂设置。安装即可连接。
+
+4. **AI 原生定位**：通过名称定位元素（`"name:Hero Section"`）而非晦涩的节点 ID。AI 可以像人类描述一样引用元素。
+
+5. **声明式嵌套布局**：使用 `children` 参数在单次操作中创建复杂的组件层次结构，而不是进行数十次顺序 API 调用。
+
+## 特性
+
+- **自然语言设计** - 使用自然语言创建和修改 Figma 设计
+- **通用 MCP 支持** - 与任何 MCP 兼容客户端配合使用：Claude Desktop、Claude Code、Cursor、Codex 等
+- **组件支持** - 创建、实例化和管理 Figma 组件
+- **无障碍工具** - 内置 WCAG 合规性检查和自动修复
+- **设计令牌** - 创建和绑定设计令牌以实现一致的样式
+- **语义类型** - 预样式组件如 `card`、`button`、`nav`、`form`
+- **自动布局** - 自动布局管理，包括间距、内边距和对齐
+- **字体控制** - 完整的排版支持，包括自定义字体、粗细和样式
+
+## 快速开始
 
 ### 前置要求
 
@@ -44,20 +70,22 @@ git clone https://github.com/youware-labs/figma-pilot.git && cd figma-pilot && .
 
 #### 1. 安装 MCP 服务器
 
-**对于 Claude Code：**
+figma-pilot 与任何 MCP 兼容客户端配合使用。选择您的客户端：
+
+**Claude Code：**
 ```bash
 claude mcp add figma-pilot -- npx @youware-labs/figma-pilot-mcp
 ```
 
-**对于 Claude Desktop：**
+**Claude Desktop：**
 
 添加到您的 MCP 配置文件（通常是 `~/.config/claude/claude_desktop_config.json`（macOS/Linux）或 `%APPDATA%\Claude\claude_desktop_config.json`（Windows））：
 
-**对于 Cursor：**
+**Cursor：**
 
 添加到您的 Cursor MCP 配置文件（通常是 `~/.cursor/mcp.json` 或在 Cursor 设置中）：
 
-**对于 Codex / 其他 MCP 客户端：**
+**Codex / 其他 MCP 客户端：**
 
 添加到您的 MCP 配置文件（位置因客户端而异）：
 
@@ -76,9 +104,9 @@ claude mcp add figma-pilot -- npx @youware-labs/figma-pilot-mcp
 
 1. 从 [GitHub Releases](https://github.com/youware-labs/figma-pilot/releases) 下载 `figma-pilot-plugin-vX.X.X.zip`
 2. 解压文件
-3. 在 Figma Desktop 中：**Plugins → Development → Import plugin from manifest...**
+3. 在 Figma Desktop 中：**Plugins > Development > Import plugin from manifest...**
 4. 选择解压文件夹中的 `manifest.json`
-5. 运行插件：**Plugins → Development → figma-pilot**
+5. 运行插件：**Plugins > Development > figma-pilot**
 
 #### 3. 验证连接
 
@@ -93,7 +121,7 @@ npx @youware-labs/figma-pilot-mcp
 # 然后在另一个终端或通过 MCP 客户端，调用 figma_status
 ```
 
-## 📖 使用示例
+## 使用示例
 
 ### 创建卡片组件
 
@@ -126,7 +154,7 @@ npx @youware-labs/figma-pilot-mcp
 将当前选择导出为 2x 比例的 PNG
 ```
 
-## 🛠️ 可用的 MCP 工具
+## 可用的 MCP 工具
 
 | 工具 | 描述 |
 |------|------|
@@ -150,7 +178,7 @@ npx @youware-labs/figma-pilot-mcp
 
 详细的工具文档，请参阅 [skills/SKILL.md](./skills/SKILL.md)。
 
-## 🔌 支持的 MCP 客户端
+## 支持的 MCP 客户端
 
 figma-pilot 设计为与任何支持[模型上下文协议 (MCP)](https://modelcontextprotocol.io/) 的客户端配合使用。以下是一些流行的客户端：
 
@@ -158,7 +186,7 @@ figma-pilot 设计为与任何支持[模型上下文协议 (MCP)](https://modelc
 |--------|---------|------|
 | **Claude Desktop** | `~/.config/claude/claude_desktop_config.json` (macOS/Linux)<br>`%APPDATA%\Claude\claude_desktop_config.json` (Windows) | [Claude Desktop MCP](https://claude.ai/docs/mcp) |
 | **Claude Code** | 通过 CLI: `claude mcp add` | [Claude Code 文档](https://claude.ai/code) |
-| **Cursor** | `~/.cursor/mcp.json` 或设置 → MCP | [Cursor MCP 文档](https://cursor.sh/docs/mcp) |
+| **Cursor** | `~/.cursor/mcp.json` 或设置 > MCP | [Cursor MCP 文档](https://cursor.sh/docs/mcp) |
 | **Codex** | 因安装而异 | 查看 Codex 文档 |
 | **其他 MCP 客户端** | 因客户端而异 | 查看您客户端的 MCP 文档 |
 
@@ -175,12 +203,12 @@ figma-pilot 设计为与任何支持[模型上下文协议 (MCP)](https://modelc
 }
 ```
 
-## 🏗️ 架构
+## 架构
 
 ```
 ┌─────────────┐     stdio      ┌─────────────────┐     HTTP      ┌──────────────┐
-│ MCP Client  │ ◄────────────► │  MCP Server     │ ◄───────────► │ Figma Plugin │
-│(Claude/Cursor│                │  (with bridge)  │   port 38451  │              │
+│ MCP Client  │ <------------> │  MCP Server     │ <-----------> │ Figma Plugin │
+│(Claude/Cursor               │  (with bridge)  │   port 38451  │              │
 │  /Codex/etc)│                └─────────────────┘               └──────────────┘
 └─────────────┘
 ```
@@ -194,7 +222,7 @@ MCP 服务器包含一个内置的 HTTP 桥接器，Figma 插件连接到该桥�
 - **CLI** (`packages/cli`) - 用于直接 Figma 操作的命令行界面
 - **共享** (`packages/shared`) - 共享的 TypeScript 类型和实用程序
 
-## 🧪 开发
+## 开发
 
 ### 项目结构
 
@@ -244,7 +272,7 @@ bun run dev:plugin
 
 然后从 Figma Desktop 中的 `packages/plugin/manifest.json` 导入插件。
 
-## 📦 创建发布版本
+## 创建发布版本
 
 ```bash
 # 构建所有内容
@@ -264,7 +292,7 @@ gh release create v0.1.6 dist/releases/figma-pilot-plugin-v0.1.6.zip \
   --notes "发布说明"
 ```
 
-## 🐛 故障排除
+## 故障排除
 
 ### 插件无法连接
 
@@ -303,23 +331,21 @@ curl -fsSL https://bun.sh/install | bash
 
 或使用 npm/yarn，但您可能需要调整构建脚本。
 
-## 🤝 贡献
+## 贡献
 
-我们欢迎贡献！请参阅 [CONTRIBUTING.md](./CONTRIBUTING.zh-CN.md) 了解指南。
+我们欢迎贡献。请参阅 [CONTRIBUTING.zh-CN.md](./CONTRIBUTING.zh-CN.md) 了解指南。
 
-## 📚 文档
+## 文档
 
 - [skills/SKILL.md](./skills/SKILL.md) - AI 代理的完整 API 参考
 - [CONTRIBUTING.md](./CONTRIBUTING.md) - 贡献指南（英文）
 - [CONTRIBUTING.zh-CN.md](./CONTRIBUTING.zh-CN.md) - 贡献指南（中文）
-- [CHANGELOG.md](./CHANGELOG.md) - 版本历史
-- [SECURITY.md](./SECURITY.md) - 安全政策
 
-## 📄 许可证
+## 许可证
 
 MIT 许可证 - 详见 [LICENSE](./LICENSE)。
 
-## 🙏 致谢
+## 致谢
 
 使用以下技术构建：
 - [Model Context Protocol](https://modelcontextprotocol.io/)
@@ -328,4 +354,4 @@ MIT 许可证 - 详见 [LICENSE](./LICENSE)。
 
 ---
 
-**由 [YouWare Labs](https://github.com/youware-labs) 用 ❤️ 制作**
+**[YouWare Labs](https://github.com/youware-labs)**
