@@ -229,7 +229,9 @@ export interface ModifyParams {
   // Text-specific
   content?: string;
   fontSize?: number;
+  fontFamily?: string;
   fontWeight?: number;
+  textColor?: string;
   // Layout
   layout?: LayoutConfig;
 }

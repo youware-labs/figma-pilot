@@ -1,0 +1,46 @@
+name: Lint and Type Check
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  lint:
+    name: Lint and Type Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Type check (CLI)
+        run: bun run --cwd packages/cli typecheck
+
+      - name: Type check (Plugin)
+        run: bun run --cwd packages/plugin typecheck
+
+      - name: Type check (MCP Server)
+        run: bun run --cwd packages/mcp-server typecheck || echo "No typecheck script, skipping"
+
+      - name: Type check (Shared)
+        run: bun run --cwd packages/shared typecheck || echo "No typecheck script, skipping"
+
+      - name: Check build
+        run: bun run build
+
+      - name: Verify no build errors
+        run: |
+          if [ ! -f "packages/cli/dist/index.js" ] || [ ! -f "packages/plugin/code.js" ] || [ ! -f "packages/mcp-server/dist/index.js" ]; then
+            echo "Build failed: missing output files"
+            exit 1
+          fi

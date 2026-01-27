@@ -1,10 +1,35 @@
 # figma-pilot
 
-A bridge that enables AI agents to create and modify Figma designs through natural language.
+[![npm version](https://img.shields.io/npm/v/@youware-labs/figma-pilot-mcp)](https://www.npmjs.com/package/@youware-labs/figma-pilot-mcp)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](https://nodejs.org/)
 
-让 AI 代理（如 Claude Code、Gemini CLI）能够直接操作 Figma 设计文件。
+> A bridge that enables AI agents to create and modify Figma designs through natural language.
 
-## One-Line Install (Local) / 一键安装
+**English** | [中文](./README.zh-CN.md)
+
+figma-pilot is an MCP (Model Context Protocol) server that allows AI agents like Claude, Gemini, and other LLMs to directly interact with Figma design files. Create layouts, modify components, check accessibility, and export designs—all through natural language commands.
+
+## ✨ Features
+
+- 🎨 **Natural Language Design** - Create and modify Figma designs using plain English
+- 🔌 **Universal MCP Support** - Works with any MCP-compatible client: Claude Desktop, Claude Code, Cursor, Codex, and more
+- 🧩 **Component Support** - Create, instantiate, and manage Figma components
+- ♿ **Accessibility Tools** - Built-in WCAG compliance checking and auto-fixing
+- 🎯 **Design Tokens** - Create and bind design tokens for consistent styling
+- 📦 **Semantic Types** - Pre-styled components like `card`, `button`, `nav`, `form`
+- 🚀 **Auto-layout** - Automatic layout management with gap, padding, and alignment
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Node.js >= 18
+- Bun (recommended) or npm/yarn
+- Figma Desktop app
+- An MCP-compatible AI client (see [Supported Clients](#supported-mcp-clients) below)
+
+### One-Line Install
 
 ```bash
 git clone https://github.com/youware-labs/figma-pilot.git && cd figma-pilot && ./scripts/install.sh
@@ -12,21 +37,32 @@ git clone https://github.com/youware-labs/figma-pilot.git && cd figma-pilot && .
 
 This will:
 - Build the project
-- Configure Claude Code MCP
-- Open Figma plugin folder for manual import
+- Configure Claude Code MCP (if available)
+- Open the Figma plugin folder for manual import
 
-## Quick Start (For Users) / 快速开始
+### Manual Setup
 
-### 1. Configure MCP / 配置 MCP
+#### 1. Install the MCP Server
+
+figma-pilot works with any MCP-compatible client. Choose your client below:
 
 **Claude Code:**
 ```bash
 claude mcp add figma-pilot -- npx @youware-labs/figma-pilot-mcp
 ```
 
-**Claude Desktop / Cursor / Gemini CLI:**
+**Claude Desktop:**
 
-Add to your MCP config file:
+Add to your MCP config file (usually `~/.config/claude/claude_desktop_config.json` on macOS/Linux, or `%APPDATA%\Claude\claude_desktop_config.json` on Windows):
+
+**Cursor:**
+
+Add to your Cursor MCP config file (usually `~/.cursor/mcp.json` or in Cursor settings):
+
+**Codex / Other MCP Clients:**
+
+Add to your MCP config file (location varies by client):
+
 ```json
 {
   "mcpServers": {
@@ -38,7 +74,7 @@ Add to your MCP config file:
 }
 ```
 
-### 2. Install Figma Plugin / 安装 Figma 插件
+#### 2. Install the Figma Plugin
 
 1. Download `figma-pilot-plugin-vX.X.X.zip` from [GitHub Releases](https://github.com/youware-labs/figma-pilot/releases)
 2. Unzip the file
@@ -46,40 +82,60 @@ Add to your MCP config file:
 4. Select `manifest.json` from the unzipped folder
 5. Run the plugin: **Plugins → Development → figma-pilot**
 
-### 3. Start Using / 开始使用
+#### 3. Verify Connection
 
 Ask your AI agent:
 ```
-"Create a card component with a header and body"
-"Change the selected frame's background to blue"
-"Create a navigation bar with logo and menu items"
-"Check accessibility and fix any issues"
+Check the Figma connection status
 ```
 
-After finishing a requested change, export a PNG for review:
-```
-figma_export({ target: "selection", format: "png", scale: 2 })
-```
-
-## How It Works / 工作原理
-
-```
-┌─────────────┐     stdio      ┌─────────────────┐     HTTP      ┌──────────────┐
-│   Claude    │ ◄────────────► │  MCP Server     │ ◄───────────► │ Figma Plugin │
-│   (or AI)   │                │  (with bridge)  │   port 38451  │              │
-└─────────────┘                └─────────────────┘               └──────────────┘
+Or use the CLI:
+```bash
+npx @youware-labs/figma-pilot-mcp
+# Then in another terminal or via MCP client, call figma_status
 ```
 
-The MCP server includes a built-in HTTP bridge. No separate server process needed.
+## 📖 Usage Examples
 
-## Available MCP Tools / 可用工具
+### Creating a Card Component
+
+```
+Create a card component with a header and body section. The header should have a title and the body should have descriptive text.
+```
+
+### Modifying Elements
+
+```
+Change the selected frame's background color to blue and add rounded corners.
+```
+
+### Building a Navigation Bar
+
+```
+Create a navigation bar with a logo on the left, menu items in the center (Home, About, Contact), and a Sign Up button on the right.
+```
+
+### Accessibility Check
+
+```
+Check accessibility for the current selection and fix any issues automatically.
+```
+
+### Export for Review
+
+After completing a design, export it for review:
+```
+Export the current selection as a PNG at 2x scale
+```
+
+## 🛠️ Available MCP Tools
 
 | Tool | Description |
 |------|-------------|
-| `figma_status` | Check connection status |
-| `figma_selection` | Get current selection |
+| `figma_status` | Check connection status to Figma plugin |
+| `figma_selection` | Get information about current selection |
 | `figma_query` | Query element by ID or name |
-| `figma_create` | Create elements (frame, text, rectangle, etc.) |
+| `figma_create` | Create elements (frame, text, rectangle, button, card, etc.) |
 | `figma_modify` | Modify element properties |
 | `figma_delete` | Delete elements |
 | `figma_append` | Move elements into a container |
@@ -87,22 +143,90 @@ The MCP server includes a built-in HTTP bridge. No separate server process neede
 | `figma_instantiate` | Create component instance |
 | `figma_to_component` | Convert selection to component |
 | `figma_create_variants` | Create component variants |
-| `figma_ensure_accessibility` | Check and fix accessibility |
+| `figma_ensure_accessibility` | Check and fix accessibility issues |
 | `figma_audit_accessibility` | Audit accessibility without fixing |
 | `figma_bind_token` | Bind a design token to a node |
 | `figma_create_token` | Create a design token |
 | `figma_sync_tokens` | Import/export design tokens |
-| `figma_export` | Export as image (use after finishing a request to review PNG) |
+| `figma_export` | Export as image (PNG/SVG/PDF/JPG) |
 
-## Development / 开发
+For detailed tool documentation, see [skills/SKILL.md](./skills/SKILL.md).
 
-For contributors and local development:
+## 🔌 Supported MCP Clients
+
+figma-pilot is designed to work with any client that supports the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/). Here are some popular clients:
+
+| Client | Config Location | Documentation |
+|--------|----------------|--------------|
+| **Claude Desktop** | `~/.config/claude/claude_desktop_config.json` (macOS/Linux)<br>`%APPDATA%\Claude\claude_desktop_config.json` (Windows) | [Claude Desktop MCP](https://claude.ai/docs/mcp) |
+| **Claude Code** | Via CLI: `claude mcp add` | [Claude Code Docs](https://claude.ai/code) |
+| **Cursor** | `~/.cursor/mcp.json` or Settings → MCP | [Cursor MCP Docs](https://cursor.sh/docs/mcp) |
+| **Codex** | Varies by installation | Check Codex documentation |
+| **Other MCP Clients** | Varies | Check your client's MCP documentation |
+
+All clients use the same configuration format:
+
+```json
+{
+  "mcpServers": {
+    "figma-pilot": {
+      "command": "npx",
+      "args": ["@youware-labs/figma-pilot-mcp"]
+    }
+  }
+}
+```
+
+## 🏗️ Architecture
+
+```
+┌─────────────┐     stdio      ┌─────────────────┐     HTTP      ┌──────────────┐
+│ MCP Client  │ ◄────────────► │  MCP Server     │ ◄───────────► │ Figma Plugin │
+│(Claude/Cursor│                │  (with bridge)  │   port 38451  │              │
+│  /Codex/etc)│                └─────────────────┘               └──────────────┘
+└─────────────┘
+```
+
+The MCP server includes a built-in HTTP bridge that the Figma plugin connects to. No separate server process needed.
+
+### Components
+
+- **MCP Server** (`packages/mcp-server`) - MCP protocol server that exposes Figma operations as tools
+- **Figma Plugin** (`packages/plugin`) - Figma plugin that receives HTTP requests and executes operations
+- **CLI** (`packages/cli`) - Command-line interface for direct Figma operations
+- **Shared** (`packages/shared`) - Shared TypeScript types and utilities
+
+## 🧪 Development
+
+### Project Structure
+
+```
+figma-pilot/
+├── packages/
+│   ├── cli/           # CLI application
+│   ├── plugin/        # Figma plugin
+│   ├── mcp-server/    # MCP server (npm package)
+│   └── shared/        # Shared TypeScript types
+├── scripts/
+│   ├── install.sh     # Installation script
+│   └── package-plugin.sh  # Plugin packaging script
+├── skills/            # Detailed documentation for AI agents
+│   ├── SKILL.md       # Main skill index
+│   └── rules/         # Individual rule files
+└── README.md
+```
+
+### Building from Source
 
 ```bash
-# Clone and build
+# Clone the repository
 git clone https://github.com/youware-labs/figma-pilot.git
 cd figma-pilot
+
+# Install dependencies
 bun install
+
+# Build all packages
 bun run build
 
 # Run MCP server locally
@@ -113,22 +237,16 @@ bun run cli status
 bun run cli create --type frame --name "Test" --width 200 --height 100
 ```
 
-### Project Structure / 项目结构
+### Running the Plugin in Development
 
-```
-figma-pilot/
-├── packages/
-│   ├── cli/           # CLI application
-│   ├── plugin/        # Figma plugin
-│   ├── mcp-server/    # MCP server (npm package)
-│   └── shared/        # Shared TypeScript types
-├── scripts/
-│   └── package-plugin.sh  # Script to package plugin for releases
-├── SKILL.md           # Detailed documentation for AI agents
-└── README.md
+```bash
+# Watch mode for plugin development
+bun run dev:plugin
 ```
 
-### Creating a Release / 发布版本
+Then import the plugin from `packages/plugin/manifest.json` in Figma Desktop.
+
+## 📦 Creating a Release
 
 ```bash
 # Build everything
@@ -136,41 +254,79 @@ bun run build
 
 # Package plugin for GitHub release
 chmod +x scripts/package-plugin.sh
-./scripts/package-plugin.sh 0.1.0
+./scripts/package-plugin.sh 0.1.6
 
-# Publish MCP server to npm
+# Publish MCP server to npm (requires npm login)
 cd packages/mcp-server
 npm publish --access public
 
 # Create GitHub release with plugin zip
-gh release create v0.1.0 dist/releases/figma-pilot-plugin-v0.1.0.zip \
-  --title "v0.1.0" \
-  --notes "Initial release"
+gh release create v0.1.6 dist/releases/figma-pilot-plugin-v0.1.6.zip \
+  --title "v0.1.6" \
+  --notes "Release notes here"
 ```
 
-## Troubleshooting / 故障排除
+## 🐛 Troubleshooting
 
-### Plugin not connecting / 插件无法连接
+### Plugin Not Connecting
 
-1. Make sure the MCP server is running (check Claude Code or your AI client)
-2. The plugin should show "Connected" status
+1. Make sure the MCP server is running (check your AI client's MCP status)
+2. The plugin should show "Connected" status in Figma
 3. Try closing and reopening the plugin in Figma
+4. Check that port 38451 is not blocked by firewall
 
-### Port 38451 already in use / 端口被占用
+### Port 38451 Already in Use
 
 ```bash
+# Find the process using the port
 lsof -i :38451
+
+# Kill the process
 kill <PID>
 ```
 
-## For AI Agent Developers / AI 开发者
+### MCP Server Not Found
 
-The `SKILL.md` file contains comprehensive documentation designed for AI agents, including:
+If using `npx`, ensure you have a stable internet connection. For offline use, install globally:
 
-- Complete command reference with JSON schemas
-- Common patterns and workflows
-- Best practices for creating complex layouts
+```bash
+npm install -g @youware-labs/figma-pilot-mcp
+```
 
-## License
+Then update your MCP config to use the global installation.
 
-MIT
+### Build Errors
+
+Make sure you have Bun installed:
+
+```bash
+curl -fsSL https://bun.sh/install | bash
+```
+
+Or use npm/yarn, but you may need to adjust build scripts.
+
+## 🤝 Contributing
+
+We welcome contributions! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
+
+## 📚 Documentation
+
+- [skills/SKILL.md](./skills/SKILL.md) - Complete API reference for AI agents
+- [CONTRIBUTING.md](./CONTRIBUTING.md) - Contribution guidelines
+- [CHANGELOG.md](./CHANGELOG.md) - Version history
+- [SECURITY.md](./SECURITY.md) - Security policy
+
+## 📄 License
+
+MIT License - see [LICENSE](./LICENSE) for details.
+
+## 🙏 Acknowledgments
+
+Built with:
+- [Model Context Protocol](https://modelcontextprotocol.io/)
+- [Figma Plugin API](https://www.figma.com/plugin-docs/)
+- [Bun](https://bun.sh/)
+
+---
+
+**Made with ❤️ by [YouWare Labs](https://github.com/youware-labs)**

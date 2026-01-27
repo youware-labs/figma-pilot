@@ -6,6 +6,18 @@ import type { ModifyParams, ModifyResult, DeleteParams, DeleteResult, AppendPara
 import { parseColor, layoutToFigma } from '@figma-pilot/shared';
 import { getTargetNode, getTargetNodes } from '../utils/serialize';
 
+function getFontStyle(weight: number): string {
+  if (weight <= 100) return 'Thin';
+  if (weight <= 200) return 'Extra Light';
+  if (weight <= 300) return 'Light';
+  if (weight <= 400) return 'Regular';
+  if (weight <= 500) return 'Medium';
+  if (weight <= 600) return 'Semi Bold';
+  if (weight <= 700) return 'Bold';
+  if (weight <= 800) return 'Extra Bold';
+  return 'Black';
+}
+
 export async function handleModify(params: ModifyParams): Promise<ModifyResult> {
   const node = await getTargetNode(params.target);
   if (!node) {
@@ -109,6 +121,42 @@ export async function handleModify(params: ModifyParams): Promise<ModifyResult> 
     }
     textNode.fontSize = params.fontSize;
     modified.push('fontSize');
+  }
+
+  // Font family and weight
+  if ((params.fontFamily !== undefined || params.fontWeight !== undefined) && node.type === 'TEXT') {
+    const textNode = node as TextNode;
+    const currentFont = textNode.fontName !== figma.mixed ? textNode.fontName as FontName : { family: 'Inter', style: 'Regular' };
+    const family = params.fontFamily || currentFont.family;
+    const weight = params.fontWeight || 400;
+    const style = getFontStyle(weight);
+
+    try {
+      await figma.loadFontAsync({ family, style });
+      textNode.fontName = { family, style };
+      if (params.fontFamily) modified.push('fontFamily');
+      if (params.fontWeight) modified.push('fontWeight');
+    } catch {
+      // Try with Regular style as fallback
+      try {
+        await figma.loadFontAsync({ family, style: 'Regular' });
+        textNode.fontName = { family, style: 'Regular' };
+        if (params.fontFamily) modified.push('fontFamily');
+      } catch {
+        console.warn(`Font not available: ${family} ${style}`);
+      }
+    }
+  }
+
+  // Text color
+  if (params.textColor !== undefined && node.type === 'TEXT') {
+    const textNode = node as TextNode;
+    if (textNode.fontName !== figma.mixed) {
+      await figma.loadFontAsync(textNode.fontName as FontName);
+    }
+    const color = parseColor(params.textColor);
+    textNode.fills = [{ type: 'SOLID', color: { r: color.r, g: color.g, b: color.b }, opacity: color.a }];
+    modified.push('textColor');
   }
 
   // Layout

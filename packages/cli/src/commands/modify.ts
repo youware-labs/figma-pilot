@@ -67,6 +67,18 @@ export const modifyCommand = defineCommand({
       type: 'string',
       description: 'Font size (for text elements)',
     },
+    'font-family': {
+      type: 'string',
+      description: 'Font family (for text elements)',
+    },
+    'font-weight': {
+      type: 'string',
+      description: 'Font weight (for text elements)',
+    },
+    'text-color': {
+      type: 'string',
+      description: 'Text color (hex, for text elements)',
+    },
     json: {
       type: 'string',
       description: 'Modifications as JSON',
@@ -100,6 +112,9 @@ export const modifyCommand = defineCommand({
       if (args.locked !== undefined) cliParams.locked = args.locked;
       if (args.content) cliParams.content = args.content;
       if (args['font-size']) cliParams.fontSize = parseFloat(args['font-size']);
+      if (args['font-family']) cliParams.fontFamily = args['font-family'];
+      if (args['font-weight']) cliParams.fontWeight = parseFloat(args['font-weight']);
+      if (args['text-color']) cliParams.textColor = args['text-color'];
 
       // Parse size
       if (args.size) {

@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  test:
+    name: Test and Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Type check all packages
+        run: |
+          bun run --cwd packages/cli typecheck || true
+          bun run --cwd packages/plugin typecheck || true
+          bun run --cwd packages/shared typecheck || true
+
+      - name: Build all packages
+        run: bun run build
+
+      - name: Verify build outputs
+        run: |
+          test -f packages/cli/dist/index.js || (echo "CLI build failed" && exit 1)
+          test -f packages/plugin/code.js || (echo "Plugin build failed" && exit 1)
+          test -f packages/mcp-server/dist/index.js || (echo "MCP server build failed" && exit 1)

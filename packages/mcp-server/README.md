@@ -1,6 +1,8 @@
 # @youware-labs/figma-pilot-mcp
 
-MCP server that enables AI agents (Claude, etc.) to create and modify Figma designs through natural language.
+MCP server that enables AI agents (Claude, Cursor, Codex, and any MCP-compatible client) to create and modify Figma designs through natural language.
+
+**English** | [中文](../../README.zh-CN.md)
 
 ## Quick Start
 
@@ -11,9 +13,17 @@ MCP server that enables AI agents (Claude, etc.) to create and modify Figma desi
 claude mcp add figma-pilot -- npx @youware-labs/figma-pilot-mcp
 ```
 
-**Claude Desktop / Cursor / Other MCP Clients:**
+**Claude Desktop:**
 
-Add to your MCP config file:
+Add to your MCP config file (usually `~/.config/claude/claude_desktop_config.json` on macOS/Linux, or `%APPDATA%\Claude\claude_desktop_config.json` on Windows):
+
+**Cursor:**
+
+Add to your Cursor MCP config file (usually `~/.cursor/mcp.json` or in Cursor settings):
+
+**Codex / Other MCP Clients:**
+
+Add to your MCP config file (location varies by client):
 ```json
 {
   "mcpServers": {
@@ -35,7 +45,7 @@ Add to your MCP config file:
 
 ### 3. Start Using
 
-Once the MCP is configured and the Figma plugin is running, you can ask Claude to:
+Once the MCP is configured and the Figma plugin is running, you can ask your AI agent to:
 - "Create a login form in Figma"
 - "Add a navigation bar with logo and menu items"
 - "Change the selected element's color to blue"
@@ -88,9 +98,10 @@ figma_export({ target: "selection", format: "png", scale: 2 })
 
 ```
 ┌─────────────┐     stdio      ┌─────────────────┐     HTTP      ┌──────────────┐
-│   Claude    │ ◄────────────► │  MCP Server     │ ◄───────────► │ Figma Plugin │
-│   (or AI)   │                │  (with bridge)  │   port 38451  │              │
-└─────────────┘                └─────────────────┘               └──────────────┘
+│ MCP Client  │ ◄────────────► │  MCP Server     │ ◄───────────► │ Figma Plugin │
+│(Claude/Cursor│                │  (with bridge)  │   port 38451  │              │
+│  /Codex/etc)│                └─────────────────┘               └──────────────┘
+└─────────────┘
 ```
 
 The MCP server includes a built-in HTTP bridge that the Figma plugin connects to. No separate server process needed.

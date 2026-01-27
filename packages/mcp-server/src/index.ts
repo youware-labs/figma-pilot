@@ -412,6 +412,7 @@ const TOOLS: Tool[] = [
         content: { type: "string", description: "Text content (for text elements)" },
         fontSize: { type: "number", description: "Font size (for text elements)" },
         fontWeight: { type: "number", description: "Font weight (for text elements)" },
+        fontFamily: { type: "string", description: "Font family name (for text elements, e.g., 'Inter', 'Roboto', 'Noto Sans SC')" },
         textColor: { type: "string", description: "Text color (hex). For text elements, preferred over 'fill' for clarity." },
         layout: {
           type: "object",
@@ -452,6 +453,9 @@ const TOOLS: Tool[] = [
         visible: { type: "boolean", description: "Visibility" },
         content: { type: "string", description: "New text content" },
         fontSize: { type: "number", description: "New font size" },
+        fontFamily: { type: "string", description: "Font family name (for text elements)" },
+        fontWeight: { type: "number", description: "Font weight (for text elements)" },
+        textColor: { type: "string", description: "Text color (hex, for text elements)" },
         layout: { type: "object", description: "Layout updates" },
       },
       required: ["target"],
