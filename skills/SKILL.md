@@ -19,17 +19,14 @@ Read individual rule files for detailed explanations and code examples:
 
 ### Connection & Query Tools
 - [rules/status.md](rules/status.md) - Check connection status to Figma plugin
-- [rules/query.md](rules/query.md) - Query elements by ID, name, or selection (also returns selection info)
-- [rules/list-components.md](rules/list-components.md) - List available components in the file
+- [rules/query.md](rules/query.md) - Query elements by ID, name, or selection
 
 ### Creating Elements
 - [rules/create.md](rules/create.md) - Create elements (frames, text, shapes, semantic types, nested layouts)
 - [rules/layout.md](rules/layout.md) - Auto-layout configuration and patterns
 
 ### Modifying Elements
-- [rules/modify.md](rules/modify.md) - Modify existing element properties
-- [rules/delete.md](rules/delete.md) - Delete elements
-- [rules/append.md](rules/append.md) - Move elements into containers
+- [rules/modify.md](rules/modify.md) - Modify, delete, and move elements
 
 ### Styling
 - [rules/effects.md](rules/effects.md) - Shadows, blur, and visual effects
@@ -44,9 +41,7 @@ Read individual rule files for detailed explanations and code examples:
 - [rules/fonts.md](rules/fonts.md) - Loading and using custom fonts
 
 ### Components
-- [rules/to-component.md](rules/to-component.md) - Convert elements to reusable components
-- [rules/create-variants.md](rules/create-variants.md) - Create component variants
-- [rules/instantiate.md](rules/instantiate.md) - Create component instances
+- [rules/components.md](rules/components.md) - List, create, variants, and instantiate components
 
 ### Accessibility
 - [rules/accessibility.md](rules/accessibility.md) - WCAG compliance checking and auto-fixing
@@ -58,9 +53,7 @@ Read individual rule files for detailed explanations and code examples:
 - [rules/export.md](rules/export.md) - Export elements as PNG, SVG, PDF, JPG
 
 ### Common Patterns
-- [rules/patterns-page-layout.md](rules/patterns-page-layout.md) - Creating page layouts with sections
-- [rules/patterns-card.md](rules/patterns-card.md) - Creating card components
-- [rules/patterns-navigation.md](rules/patterns-navigation.md) - Building navigation bars
+- [rules/patterns.md](rules/patterns.md) - Cards, navigation bars, page layouts
 
 ### Reference
 - [rules/target-specifiers.md](rules/target-specifiers.md) - How to target elements (ID, selection, name)

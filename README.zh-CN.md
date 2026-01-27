@@ -159,8 +159,7 @@ npx @youware-labs/figma-pilot-mcp
 | 工具 | 描述 |
 |------|------|
 | `figma_status` | 检查与 Figma 插件的连接状态 |
-| `figma_selection` | 获取当前选择的信息 |
-| `figma_query` | 通过 ID 或名称查询元素 |
+| `figma_query` | 通过 ID、名称或选区查询元素 |
 | `figma_create` | 创建元素（框架、文本、矩形、按钮、卡片等） |
 | `figma_modify` | 修改元素属性 |
 | `figma_delete` | 删除元素 |
@@ -169,8 +168,7 @@ npx @youware-labs/figma-pilot-mcp
 | `figma_instantiate` | 创建组件实例 |
 | `figma_to_component` | 将选择转换为组件 |
 | `figma_create_variants` | 创建组件变体 |
-| `figma_ensure_accessibility` | 检查并修复无障碍性问题 |
-| `figma_audit_accessibility` | 审核无障碍性但不修复 |
+| `figma_accessibility` | 检查并可选修复无障碍性问题（WCAG） |
 | `figma_bind_token` | 将设计令牌绑定到节点 |
 | `figma_create_token` | 创建设计令牌 |
 | `figma_sync_tokens` | 导入/导出设计令牌 |

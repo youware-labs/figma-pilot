@@ -394,6 +394,7 @@ const TOOLS: Tool[] = [
     inputSchema: {
       type: "object",
       properties: {
+        // Basic properties
         type: {
           type: "string",
           enum: ["frame", "text", "rect", "ellipse", "line", "card", "button", "form", "nav", "input"],
@@ -405,26 +406,113 @@ const TOOLS: Tool[] = [
         x: { type: "number", description: "X position" },
         y: { type: "number", description: "Y position" },
         parent: { type: "string", description: "Parent element (ID, 'selection', or 'name:ElementName')" },
+        
+        // Fill and stroke
         fill: { type: "string", description: "Fill color (hex, e.g., '#FF0000')" },
         stroke: { type: "string", description: "Stroke color (hex)" },
         strokeWidth: { type: "number", description: "Stroke width" },
-        cornerRadius: { type: "number", description: "Corner radius" },
+        strokeAlign: { type: "string", enum: ["INSIDE", "OUTSIDE", "CENTER"], description: "Stroke alignment" },
+        strokeCap: { type: "string", enum: ["NONE", "ROUND", "SQUARE", "ARROW_LINES", "ARROW_EQUILATERAL"], description: "Stroke cap style" },
+        strokeJoin: { type: "string", enum: ["MITER", "BEVEL", "ROUND"], description: "Stroke join style" },
+        dashPattern: { type: "array", items: { type: "number" }, description: "Dash pattern, e.g., [5, 5] for dashed line" },
+        
+        // Corner radius
+        cornerRadius: { type: "number", description: "Uniform corner radius" },
+        topLeftRadius: { type: "number", description: "Top-left corner radius" },
+        topRightRadius: { type: "number", description: "Top-right corner radius" },
+        bottomLeftRadius: { type: "number", description: "Bottom-left corner radius" },
+        bottomRightRadius: { type: "number", description: "Bottom-right corner radius" },
+        
+        // Text properties
         content: { type: "string", description: "Text content (for text elements)" },
         fontSize: { type: "number", description: "Font size (for text elements)" },
-        fontWeight: { type: "number", description: "Font weight (for text elements)" },
-        fontFamily: { type: "string", description: "Font family name (for text elements, e.g., 'Inter', 'Roboto', 'Noto Sans SC')" },
-        textColor: { type: "string", description: "Text color (hex). For text elements, preferred over 'fill' for clarity." },
+        fontWeight: { type: "number", description: "Font weight 100-900 (for text elements)" },
+        fontFamily: { type: "string", description: "Font family name (e.g., 'Inter', 'Roboto', 'Noto Sans SC')" },
+        textColor: { type: "string", description: "Text color (hex). Preferred over 'fill' for text elements." },
+        textAlign: { type: "string", enum: ["LEFT", "CENTER", "RIGHT", "JUSTIFIED"], description: "Text alignment" },
+        textAutoResize: { type: "string", enum: ["WIDTH_AND_HEIGHT", "HEIGHT", "TRUNCATE", "NONE"], description: "Text auto-resize mode" },
+        maxWidth: { type: "number", description: "Max width for text wrapping" },
+        lineHeight: { type: "number", description: "Line height in pixels" },
+        letterSpacing: { type: "number", description: "Letter spacing in pixels" },
+        textDecoration: { type: "string", enum: ["NONE", "UNDERLINE", "STRIKETHROUGH"], description: "Text decoration" },
+        textCase: { type: "string", enum: ["ORIGINAL", "UPPER", "LOWER", "TITLE"], description: "Text case transformation" },
+        
+        // Layout
         layout: {
           type: "object",
           description: "Auto-layout configuration",
           properties: {
             direction: { type: "string", enum: ["row", "column"] },
             gap: { type: "number" },
-            padding: { type: "number" },
+            padding: { type: "number", description: "Uniform padding, or use object for individual sides" },
             alignItems: { type: "string", enum: ["start", "center", "end", "baseline"] },
-            justifyContent: { type: "string", enum: ["start", "center", "end", "space-between"] },
+            justifyContent: { type: "string", enum: ["start", "center", "end", "space-between", "space-around"] },
+            wrap: { type: "boolean", description: "Enable wrapping for multi-row/column layouts" },
           },
         },
+        layoutSizingHorizontal: { type: "string", enum: ["FIXED", "HUG", "FILL"], description: "Horizontal sizing in auto-layout" },
+        layoutSizingVertical: { type: "string", enum: ["FIXED", "HUG", "FILL"], description: "Vertical sizing in auto-layout" },
+        layoutPositioning: { type: "string", enum: ["AUTO", "ABSOLUTE"], description: "Positioning mode within auto-layout" },
+        
+        // Effects
+        effects: {
+          type: "array",
+          description: "Visual effects (shadows, blur)",
+          items: {
+            type: "object",
+            properties: {
+              type: { type: "string", enum: ["DROP_SHADOW", "INNER_SHADOW", "LAYER_BLUR", "BACKGROUND_BLUR"] },
+              color: { type: "string", description: "Effect color (hex with alpha, e.g., '#00000040')" },
+              offset: { type: "object", properties: { x: { type: "number" }, y: { type: "number" } } },
+              radius: { type: "number" },
+              spread: { type: "number" },
+            },
+          },
+        },
+        
+        // Gradient
+        gradient: {
+          type: "object",
+          description: "Gradient fill (replaces solid fill)",
+          properties: {
+            type: { type: "string", enum: ["LINEAR", "RADIAL", "ANGULAR", "DIAMOND"] },
+            angle: { type: "number", description: "Angle in degrees (for LINEAR gradient)" },
+            stops: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  position: { type: "number", description: "Position 0-1" },
+                  color: { type: "string", description: "Hex color" },
+                },
+              },
+            },
+          },
+        },
+        
+        // Transform
+        rotation: { type: "number", description: "Rotation angle in degrees" },
+        blendMode: { type: "string", enum: ["PASS_THROUGH", "NORMAL", "DARKEN", "MULTIPLY", "COLOR_BURN", "LIGHTEN", "SCREEN", "COLOR_DODGE", "OVERLAY", "SOFT_LIGHT", "HARD_LIGHT", "DIFFERENCE", "EXCLUSION"], description: "Blend mode" },
+        
+        // Frame properties
+        clipsContent: { type: "boolean", description: "Clip content to frame bounds" },
+        
+        // Constraints
+        constraints: {
+          type: "object",
+          description: "Responsive constraints",
+          properties: {
+            horizontal: { type: "string", enum: ["MIN", "CENTER", "MAX", "STRETCH", "SCALE"] },
+            vertical: { type: "string", enum: ["MIN", "CENTER", "MAX", "STRETCH", "SCALE"] },
+          },
+        },
+        
+        // Size constraints
+        minWidth: { type: "number", description: "Minimum width" },
+        minHeight: { type: "number", description: "Minimum height" },
+        maxHeight: { type: "number", description: "Maximum height" },
+        
+        // Children
         children: {
           type: "array",
           description: "Nested child elements to create",
@@ -441,22 +529,42 @@ const TOOLS: Tool[] = [
       type: "object",
       properties: {
         target: { type: "string", description: "Element to modify (ID, 'selection', or 'name:ElementName')" },
+        
+        // Basic properties
         name: { type: "string", description: "New name" },
         width: { type: "number", description: "New width" },
         height: { type: "number", description: "New height" },
         x: { type: "number", description: "New X position" },
         y: { type: "number", description: "New Y position" },
+        
+        // Appearance
         fill: { type: "string", description: "New fill color (hex)" },
         stroke: { type: "string", description: "New stroke color (hex)" },
+        strokeWidth: { type: "number", description: "Stroke width" },
         cornerRadius: { type: "number", description: "New corner radius" },
         opacity: { type: "number", description: "Opacity (0-1)" },
         visible: { type: "boolean", description: "Visibility" },
+        locked: { type: "boolean", description: "Lock/unlock element" },
+        
+        // Text properties
         content: { type: "string", description: "New text content" },
         fontSize: { type: "number", description: "New font size" },
         fontFamily: { type: "string", description: "Font family name (for text elements)" },
         fontWeight: { type: "number", description: "Font weight (for text elements)" },
         textColor: { type: "string", description: "Text color (hex, for text elements)" },
-        layout: { type: "object", description: "Layout updates" },
+        
+        // Layout
+        layout: {
+          type: "object",
+          description: "Layout updates",
+          properties: {
+            direction: { type: "string", enum: ["row", "column"] },
+            gap: { type: "number" },
+            padding: { type: "number" },
+            alignItems: { type: "string", enum: ["start", "center", "end", "baseline"] },
+            justifyContent: { type: "string", enum: ["start", "center", "end", "space-between", "space-around"] },
+          },
+        },
       },
       required: ["target"],
     },
