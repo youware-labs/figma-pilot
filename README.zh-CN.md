@@ -12,12 +12,12 @@
 ### OpenAI 着陆页
 > 提示词: "Create an OpenAI style landing page introducing the upcoming GPT 5.3 release on Figma"
 
-<video src="./assets/openai.mp4" controls></video>
+[![OpenAI 着陆页演示](./assets/openai.gif)](./assets/openai.mp4)
 
 ### Manus 设计系统
 > 提示词: "Generate a Manus design system components based on the screenshot, on Figma"
 
-<video src="./assets/manus.mp4" controls></video>
+[![Manus 设计系统演示](./assets/manus.gif)](./assets/manus.mp4)
 
 ## 设计理念
 

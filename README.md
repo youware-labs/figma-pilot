@@ -12,12 +12,12 @@
 ### OpenAI Landing Page
 > Prompt: "Create an OpenAI style landing page introducing the upcoming GPT 5.3 release on Figma"
 
-<video src="./assets/openai.mp4" controls></video>
+[![OpenAI Landing Page Demo](./assets/openai.gif)](./assets/openai.mp4)
 
 ### Manus Design System
 > Prompt: "Generate a Manus design system components based on the screenshot, on Figma"
 
-<video src="./assets/manus.mp4" controls></video>
+[![Manus Design System Demo](./assets/manus.gif)](./assets/manus.mp4)
 
 ## Design Philosophy
 
