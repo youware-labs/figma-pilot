@@ -1,0 +1,42 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build plugin
+        run: bun run build:plugin
+
+      - name: Package plugin
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          mkdir -p dist/releases
+          cd packages/plugin
+          zip -r "../../dist/releases/figma-pilot-plugin-v${VERSION}.zip" \
+            manifest.json \
+            dist/
+          cd ../..
+          echo "Created: dist/releases/figma-pilot-plugin-v${VERSION}.zip"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/releases/*.zip
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

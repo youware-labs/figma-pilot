@@ -219,6 +219,28 @@ kill <PID>
 npm install -g @youware-labs/figma-pilot-mcp
 ```
 
+### 插件错误："ENOENT: no such file or directory, lstat '.../dist/main.js'"
+
+此错误表示插件目录缺少 `dist` 文件夹。可能的原因：
+1. 下载的 zip 文件不完整
+2. 直接使用源码但未构建
+
+**解决方法：**
+
+如果你有源码，构建插件：
+```bash
+cd packages/plugin
+bun install
+bun run build
+```
+
+或从项目根目录构建：
+```bash
+bun run build:plugin
+```
+
+构建完成后，确认 `packages/plugin/dist/main.js` 和 `packages/plugin/dist/ui.html` 存在，然后在 Figma 中重新导入插件。
+
 ## 许可证
 
 MIT - [YouWare Labs](https://github.com/youware-labs)

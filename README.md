@@ -219,6 +219,28 @@ For offline use, install globally:
 npm install -g @youware-labs/figma-pilot-mcp
 ```
 
+### Plugin Error: "ENOENT: no such file or directory, lstat '.../dist/main.js'"
+
+This error means the `dist` folder is missing from the plugin directory. This can happen if:
+1. The downloaded zip file was incomplete
+2. You're using the source code directly without building
+
+**Solution:**
+
+If you have the source code, build the plugin:
+```bash
+cd packages/plugin
+bun install
+bun run build
+```
+
+Or build from the project root:
+```bash
+bun run build:plugin
+```
+
+After building, verify that `packages/plugin/dist/main.js` and `packages/plugin/dist/ui.html` exist, then import the plugin again in Figma.
+
 ## License
 
 MIT - [YouWare Labs](https://github.com/youware-labs)
