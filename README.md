@@ -9,8 +9,15 @@
 
 ## Demo
 
-<!-- TODO: Add demo video here -->
-[![Demo Video](https://img.shields.io/badge/Demo-Coming%20Soon-lightgrey)]()
+### OpenAI Landing Page
+> Prompt: "Create an OpenAI style landing page introducing the upcoming GPT 5.3 release on Figma"
+
+<video src="https://github.com/youware-labs/figma-pilot/raw/master/assets/openai.mp4" controls width="100%"></video>
+
+### Manus Design System
+> Prompt: "Generate a Manus design system components based on the screenshot, on Figma"
+
+<video src="https://github.com/youware-labs/figma-pilot/raw/master/assets/manus.mp4" controls width="100%"></video>
 
 ## Design Philosophy
 
