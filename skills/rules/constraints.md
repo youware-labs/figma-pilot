@@ -21,9 +21,11 @@ Set constraints for responsive behavior.
 
 ### Examples
 
-```typescript
+```javascript
+// Inside figma_execute:
+
 // Element that stretches horizontally
-figma_create({
+await figma.create({
   type: "frame",
   name: "Header",
   width: 1440,
@@ -33,10 +35,10 @@ figma_create({
     horizontal: "STRETCH",
     vertical: "MIN"
   }
-})
+});
 
 // Centered element
-figma_create({
+await figma.create({
   type: "frame",
   name: "Modal",
   width: 400,
@@ -47,17 +49,17 @@ figma_create({
     horizontal: "CENTER",
     vertical: "CENTER"
   }
-})
+});
 
 // Bottom-right anchored
-figma_create({
+await figma.create({
   type: "button",
   name: "FAB",
   constraints: {
     horizontal: "MAX",
     vertical: "MAX"
   }
-})
+});
 ```
 
 ## Min/Max Size Constraints
@@ -71,9 +73,11 @@ Set size limits for responsive elements.
 | `maxWidth` | number | Maximum width constraint |
 | `maxHeight` | number | Maximum height constraint |
 
-```typescript
+```javascript
+// Inside figma_execute:
+
 // Card with min/max width
-figma_create({
+await figma.create({
   type: "card",
   name: "Responsive Card",
   width: 320,
@@ -83,10 +87,10 @@ figma_create({
   children: [
     { type: "text", content: "Flexible Card", fontSize: 20, fontWeight: 600 }
   ]
-})
+});
 
 // Text container with max height
-figma_create({
+await figma.create({
   type: "frame",
   name: "Scrollable Content",
   width: 300,
@@ -95,5 +99,5 @@ figma_create({
   fill: "#FFFFFF",
   clipsContent: true,
   layout: { direction: "column", padding: 16, gap: 8 }
-})
+});
 ```

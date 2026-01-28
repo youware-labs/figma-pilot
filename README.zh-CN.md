@@ -123,58 +123,118 @@ npx @youware-labs/figma-pilot-mcp
 
 ## 使用示例
 
-### 创建卡片组件
+### 自然语言（AI 处理代码）
+
+您仍然可以使用自然语言 - AI 会生成相应的代码：
 
 ```
 创建一个带有标题和正文部分的卡片组件。标题应该有一个标题，正文应该有描述性文本。
 ```
 
-### 修改元素
-
 ```
 将所选框架的背景颜色改为蓝色并添加圆角。
 ```
 
-### 构建导航栏
+### 直接代码示例
 
-```
-创建一个导航栏，左侧有徽标，中间有菜单项（首页、关于、联系），右侧有注册按钮。
+或查看 AI 在后台生成的代码：
+
+**创建卡片组件：**
+```javascript
+// figma_execute
+await figma.create({
+  type: 'card',
+  name: '用户卡片',
+  children: [
+    { type: 'text', content: '卡片标题', fontSize: 18, fontWeight: 600 },
+    { type: 'text', content: '卡片描述内容', fontSize: 14, fill: '#666' }
+  ]
+});
 ```
 
-### 无障碍性检查
-
+**批量修改元素：**
+```javascript
+// figma_execute - 修改选区中所有矩形
+const { nodes } = await figma.query({ target: 'selection' });
+const rects = nodes.filter(n => n.type === 'RECTANGLE');
+for (const rect of rects) {
+  await figma.modify({ target: rect.id, fill: '#0066FF', cornerRadius: 8 });
+}
+console.log(`已修改 ${rects.length} 个矩形`);
 ```
-检查当前选择的无障碍性并自动修复任何问题。
+
+**无障碍性检查并自动修复：**
+```javascript
+// figma_execute
+const result = await figma.accessibility({ 
+  target: 'page', 
+  level: 'AA', 
+  autoFix: true 
+});
+console.log(`已修复 ${result.fixedCount} / ${result.totalIssues} 个问题`);
 ```
 
-### 导出以供审查
-
-完成设计后，导出以供审查：
-```
-将当前选择导出为 2x 比例的 PNG
+**导出以供审查：**
+```javascript
+// figma_execute
+const exported = await figma.export({ 
+  target: 'selection', 
+  format: 'png', 
+  scale: 2 
+});
+console.log(`已导出 ${exported.size} 字节`);
 ```
 
 ## 可用的 MCP 工具
 
+figma-pilot 采用**代码执行模式**以实现最大效率。不再暴露 15+ 个独立工具，而是只提供 3 个：
+
 | 工具 | 描述 |
 |------|------|
 | `figma_status` | 检查与 Figma 插件的连接状态 |
-| `figma_query` | 通过 ID、名称或选区查询元素 |
-| `figma_create` | 创建元素（框架、文本、矩形、按钮、卡片等） |
-| `figma_modify` | 修改元素属性 |
-| `figma_delete` | 删除元素 |
-| `figma_append` | 将元素移动到容器中 |
-| `figma_list_components` | 列出可用组件 |
-| `figma_instantiate` | 创建组件实例 |
-| `figma_to_component` | 将选择转换为组件 |
-| `figma_create_variants` | 创建组件变体 |
-| `figma_accessibility` | 检查并可选修复无障碍性问题（WCAG） |
-| `figma_bind_token` | 将设计令牌绑定到节点 |
-| `figma_create_token` | 创建设计令牌 |
-| `figma_sync_tokens` | 导入/导出设计令牌 |
-| `figma_export` | 导出为图像（PNG/SVG/PDF/JPG） |
+| `figma_execute` | 执行 JavaScript 代码，可访问所有 Figma API |
+| `figma_get_api_docs` | 获取详细的 API 文档 |
 
-详细的工具文档，请参阅 [skills/SKILL.md](./skills/SKILL.md)。
+### 为什么采用代码执行模式？
+
+传统 MCP 工具需要预先加载所有工具定义，并通过上下文窗口传递中间结果。当工具数量较多时，这变得效率低下。
+
+通过代码执行模式：
+- **减少 90%+ 的 token** - 3 个工具定义而非 15+
+- **批量操作** - 在一次调用中修改 100 个元素，而非 100 次工具调用
+- **数据过滤** - 在返回上下文之前过滤查询结果
+- **复杂工作流** - 在代码中使用循环、条件和错误处理
+
+### `figma_execute` 中可用的 API
+
+`figma` 对象提供所有操作：
+
+```javascript
+// 核心操作
+figma.status()                    // 检查连接
+figma.query({ target })           // 查询元素
+figma.create({ type, ... })       // 创建元素
+figma.modify({ target, ... })     // 修改元素
+figma.delete({ target })          // 删除元素
+figma.append({ target, parent })  // 移动到容器
+
+// 组件
+figma.listComponents({ filter? }) // 列出组件
+figma.instantiate({ component })  // 创建实例
+figma.toComponent({ target })     // 转换为组件
+figma.createVariants({ ... })     // 创建变体
+
+// 无障碍性和令牌
+figma.accessibility({ target })   // WCAG 检查
+figma.createToken({ ... })        // 创建设计令牌
+figma.bindToken({ ... })          // 绑定令牌到元素
+figma.syncTokens({ ... })         // 导入/导出令牌
+
+// 导出
+figma.export({ target, format })  // 导出为图像
+```
+
+详细的 API 文档，请参阅 [skills/SKILL.md](./skills/SKILL.md)。
 
 ## 支持的 MCP 客户端
 

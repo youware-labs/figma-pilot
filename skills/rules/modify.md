@@ -5,7 +5,7 @@ metadata:
   tags: modify, update, delete, append, move, properties
 ---
 
-## figma_modify
+## figma.modify()
 
 Modify existing elements.
 
@@ -35,54 +35,66 @@ Modify existing elements.
 
 ### Examples
 
-```typescript
+```javascript
+// Inside figma_execute:
+
 // Change fill color
-figma_modify({ target: "selection", fill: "#FF0000" })
+await figma.modify({ target: "selection", fill: "#FF0000" });
 
 // Target by name
-figma_modify({ target: "name:Hero Section", fill: "#0066FF" })
+await figma.modify({ target: "name:Hero Section", fill: "#0066FF" });
 
 // Resize and move
-figma_modify({ target: "123:456", width: 200, height: 100, x: 50, y: 50 })
+await figma.modify({ target: "123:456", width: 200, height: 100, x: 50, y: 50 });
 
 // Change text
-figma_modify({ target: "selection", content: "New Text", fontSize: 18 })
+await figma.modify({ target: "selection", content: "New Text", fontSize: 18 });
 
 // Toggle visibility
-figma_modify({ target: "selection", visible: false })
+await figma.modify({ target: "selection", visible: false });
 
 // Change opacity
-figma_modify({ target: "selection", opacity: 0.5 })
+await figma.modify({ target: "selection", opacity: 0.5 });
 
 // Update layout
-figma_modify({ target: "selection", layout: { gap: 24, padding: 16 } })
+await figma.modify({ target: "selection", layout: { gap: 24, padding: 16 } });
+
+// Batch modify multiple elements
+const { nodes } = await figma.query({ target: "selection" });
+for (const node of nodes) {
+  await figma.modify({ target: node.id, fill: "#0066FF" });
+}
+console.log(`Modified ${nodes.length} elements`);
 ```
 
 ---
 
-## figma_delete
+## figma.delete()
 
 Delete elements.
 
-```typescript
-figma_delete({ target: "selection" })
-figma_delete({ target: "123:456" })
-figma_delete({ target: "name:OldElement" })
+```javascript
+// Inside figma_execute:
+await figma.delete({ target: "selection" });
+await figma.delete({ target: "123:456" });
+await figma.delete({ target: "name:OldElement" });
 ```
 
 ---
 
-## figma_append
+## figma.append()
 
 Move element(s) into a container frame.
 
-```typescript
+```javascript
+// Inside figma_execute:
+
 // Move selection into a frame by name
-figma_append({ target: "selection", parent: "name:Hero Section" })
+await figma.append({ target: "selection", parent: "name:Hero Section" });
 
 // Move specific element into another
-figma_append({ target: "name:Title", parent: "name:Card" })
+await figma.append({ target: "name:Title", parent: "name:Card" });
 
 // Move by ID
-figma_append({ target: "123:456", parent: "789:012" })
+await figma.append({ target: "123:456", parent: "789:012" });
 ```

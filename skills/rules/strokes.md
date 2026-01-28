@@ -22,9 +22,11 @@ Advanced stroke options for lines and shapes.
 
 ### Examples
 
-```typescript
+```javascript
+// Inside figma_execute:
+
 // Dashed border
-figma_create({
+await figma.create({
   type: "rect",
   name: "Dashed Box",
   width: 200,
@@ -34,10 +36,10 @@ figma_create({
   strokeWidth: 2,
   dashPattern: [8, 4],  // 8px dash, 4px gap
   cornerRadius: 8
-})
+});
 
 // Dotted line
-figma_create({
+await figma.create({
   type: "line",
   name: "Dotted Divider",
   width: 300,
@@ -45,20 +47,20 @@ figma_create({
   strokeWidth: 2,
   dashPattern: [2, 4],
   strokeCap: "ROUND"
-})
+});
 
 // Arrow line
-figma_create({
+await figma.create({
   type: "line",
   name: "Arrow",
   width: 150,
   stroke: "#333333",
   strokeWidth: 2,
   strokeCap: "ARROW_EQUILATERAL"
-})
+});
 
 // Inside stroke
-figma_create({
+await figma.create({
   type: "rect",
   name: "Inside Border",
   width: 100,
@@ -68,5 +70,5 @@ figma_create({
   strokeWidth: 4,
   strokeAlign: "INSIDE",
   cornerRadius: 8
-})
+});
 ```

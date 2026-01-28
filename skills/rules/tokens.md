@@ -7,38 +7,42 @@ metadata:
 
 ## Design Tokens
 
-### figma_bind_token
+### figma.bindToken()
 
 Bind a design token to a node property.
 
-```typescript
-figma_bind_token({ target: "selection", property: "fill", token: "colors/primary" })
-figma_bind_token({ target: "name:Button", property: "cornerRadius", token: "radii/sm" })
+```javascript
+// Inside figma_execute:
+await figma.bindToken({ target: "selection", property: "fill", token: "colors/primary" });
+await figma.bindToken({ target: "name:Button", property: "cornerRadius", token: "radii/sm" });
 ```
 
-### figma_create_token
+### figma.createToken()
 
 Create a new design token.
 
-```typescript
-figma_create_token({
+```javascript
+// Inside figma_execute:
+await figma.createToken({
   collection: "colors",
   name: "primary",
   type: "COLOR",
   value: "#2563EB"
-})
+});
 ```
 
-### figma_sync_tokens
+### figma.syncTokens()
 
 Import or export token JSON.
 
-```typescript
+```javascript
+// Inside figma_execute:
+
 // Import tokens
-figma_sync_tokens({ from: "/path/to/tokens.json" })
+await figma.syncTokens({ from: "/path/to/tokens.json" });
 
 // Export tokens
-figma_sync_tokens({ to: "/path/to/tokens.json" })
+await figma.syncTokens({ to: "/path/to/tokens.json" });
 ```
 
 Use tokens for consistency in design systems. Create tokens for colors, spacing, radii, and other reusable values.

@@ -42,45 +42,47 @@ Create and configure text elements.
 
 ## Text Wrapping and Sizing
 
-```typescript
+```javascript
+// Inside figma_execute:
+
 // Text with custom font
-figma_create({
+await figma.create({
   type: "text",
   content: "Custom Font Text",
   fontFamily: "Roboto",
   fontWeight: 700,
   fontSize: 24
-})
+});
 
 // Text that wraps within a max width
-figma_create({
+await figma.create({
   type: "text",
   content: "This is a long paragraph that will wrap to multiple lines.",
   maxWidth: 300,  // Automatically enables text wrapping
   lineHeight: 24
-})
+});
 
 // Centered text
-figma_create({
+await figma.create({
   type: "text",
   content: "Centered Heading",
   textAlign: "CENTER",
   fontSize: 32,
   fontWeight: 700
-})
+});
 
 // Text with explicit color (white text on dark background)
-figma_create({
+await figma.create({
   type: "frame",
   fill: "#333333",
   layout: { direction: "row", padding: 16 },
   children: [
     { type: "text", content: "Button", textColor: "#FFFFFF", fontWeight: 600 }
   ]
-})
+});
 
 // Child element that fills parent width
-figma_create({
+await figma.create({
   type: "frame",
   width: 400,
   layout: { direction: "column", gap: 16 },
@@ -91,5 +93,5 @@ figma_create({
       layoutSizingHorizontal: "FILL"  // Stretches to parent width
     }
   ]
-})
+});
 ```

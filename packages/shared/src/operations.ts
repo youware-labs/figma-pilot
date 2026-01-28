@@ -184,23 +184,23 @@ export function effectToFigma(effect: EffectConfig): Record<string, unknown> {
     radius: effect.radius,
   };
 
-  // Parse color with alpha
-  if (effect.color) {
-    const color = parseColor(effect.color);
-    if (color) {
-      result.color = { r: color.r, g: color.g, b: color.b, a: color.a };
-    }
-  } else {
-    // Default shadow color
-    result.color = { r: 0, g: 0, b: 0, a: 0.25 };
-  }
-
-  // Offset and blendMode for shadows
+  // Color, offset, spread, and blendMode only apply to shadow effects
   if (effect.type === 'DROP_SHADOW' || effect.type === 'INNER_SHADOW') {
+    // Parse color with alpha
+    if (effect.color) {
+      const color = parseColor(effect.color);
+      if (color) {
+        result.color = { r: color.r, g: color.g, b: color.b, a: color.a };
+      }
+    } else {
+      // Default shadow color
+      result.color = { r: 0, g: 0, b: 0, a: 0.25 };
+    }
     result.offset = effect.offset || { x: 0, y: 4 };
     result.spread = effect.spread || 0;
     result.blendMode = 'NORMAL';
   }
+  // LAYER_BLUR and BACKGROUND_BLUR only need type, visible, and radius
 
   return result;
 }

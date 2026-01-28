@@ -20,9 +20,11 @@ Add visual effects like shadows and blur to elements using the `effects` paramet
 
 ### Examples
 
-```typescript
+```javascript
+// Inside figma_execute:
+
 // Drop shadow
-figma_create({
+await figma.create({
   type: "card",
   name: "Elevated Card",
   width: 320,
@@ -40,10 +42,10 @@ figma_create({
   children: [
     { type: "text", content: "Card with shadow", fontSize: 16 }
   ]
-})
+});
 
 // Multiple shadows (layered)
-figma_create({
+await figma.create({
   type: "frame",
   name: "Multi-Shadow",
   width: 200,
@@ -55,10 +57,10 @@ figma_create({
     { type: "DROP_SHADOW", color: "#0000000F", offset: { x: 0, y: 4 }, radius: 6 },
     { type: "DROP_SHADOW", color: "#0000000A", offset: { x: 0, y: 10 }, radius: 15 }
   ]
-})
+});
 
 // Inner shadow
-figma_create({
+await figma.create({
   type: "rect",
   name: "Inset",
   width: 100,
@@ -67,10 +69,10 @@ figma_create({
   effects: [
     { type: "INNER_SHADOW", color: "#00000020", offset: { x: 0, y: 2 }, radius: 4 }
   ]
-})
+});
 
 // Layer blur
-figma_create({
+await figma.create({
   type: "rect",
   name: "Blurred",
   width: 200,
@@ -79,10 +81,10 @@ figma_create({
   effects: [
     { type: "LAYER_BLUR", radius: 20 }
   ]
-})
+});
 
 // Background blur (glass effect)
-figma_create({
+await figma.create({
   type: "frame",
   name: "Glass Panel",
   width: 300,
@@ -92,5 +94,5 @@ figma_create({
   effects: [
     { type: "BACKGROUND_BLUR", radius: 40 }
   ]
-})
+});
 ```

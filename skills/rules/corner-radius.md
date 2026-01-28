@@ -21,9 +21,11 @@ Set different radius for each corner using individual properties.
 
 ### Examples
 
-```typescript
+```javascript
+// Inside figma_execute:
+
 // Speech bubble style
-figma_create({
+await figma.create({
   type: "frame",
   name: "Speech Bubble",
   width: 200,
@@ -33,10 +35,10 @@ figma_create({
   topRightRadius: 16,
   bottomLeftRadius: 4,
   bottomRightRadius: 16
-})
+});
 
 // Tab shape
-figma_create({
+await figma.create({
   type: "rect",
   name: "Tab",
   width: 120,
@@ -46,10 +48,10 @@ figma_create({
   topRightRadius: 8,
   bottomLeftRadius: 0,
   bottomRightRadius: 0
-})
+});
 
 // Notch style
-figma_create({
+await figma.create({
   type: "frame",
   name: "Notched Card",
   width: 300,
@@ -59,5 +61,5 @@ figma_create({
   topRightRadius: 4,
   bottomLeftRadius: 4,
   bottomRightRadius: 24
-})
+});
 ```

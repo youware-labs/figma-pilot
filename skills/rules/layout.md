@@ -22,16 +22,18 @@ Note: For stretch behavior, use `layoutSizingVertical` or `layoutSizingHorizonta
 
 ## Examples
 
-```typescript
+```javascript
+// Inside figma_execute:
+
 // Horizontal row with gap
-figma_create({
+await figma.create({
   type: "frame",
   name: "Row",
   layout: { direction: "row", gap: 16, padding: 24 }
-})
+});
 
 // Vertical column centered
-figma_create({
+await figma.create({
   type: "frame",
   name: "Column",
   layout: { 
@@ -40,20 +42,20 @@ figma_create({
     alignItems: "center",
     justifyContent: "center"
   }
-})
+});
 
 // Asymmetric padding
-figma_create({
+await figma.create({
   type: "frame",
   name: "Card",
   layout: { 
     direction: "column",
     padding: { top: 24, right: 16, bottom: 24, left: 16 }
   }
-})
+});
 
 // Wrapping layout (multi-row)
-figma_create({
+await figma.create({
   type: "frame",
   name: "Grid",
   width: 400,
@@ -62,7 +64,7 @@ figma_create({
     gap: 16,
     wrap: true  // Items wrap to next row when exceeding width
   }
-})
+});
 ```
 
 ## Layout Sizing
@@ -74,9 +76,11 @@ Control how child elements size within auto-layout:
 | `layoutSizingHorizontal` | "FIXED", "HUG", "FILL" | Horizontal sizing behavior |
 | `layoutSizingVertical` | "FIXED", "HUG", "FILL" | Vertical sizing behavior |
 
-```typescript
+```javascript
+// Inside figma_execute:
+
 // Child element that fills parent width
-figma_create({
+await figma.create({
   type: "frame",
   width: 400,
   layout: { direction: "column", gap: 16 },
@@ -87,5 +91,5 @@ figma_create({
       layoutSizingHorizontal: "FILL"  // Stretches to parent width
     }
   ]
-})
+});
 ```

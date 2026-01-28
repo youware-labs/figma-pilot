@@ -361,8 +361,228 @@ class EmbeddedBridgeServer {
 }
 
 // ============================================================================
-// Tool definitions
+// Tool definitions (Code Execution Mode - minimal footprint)
 // ============================================================================
+
+// API documentation for code execution
+const API_DOCS = `
+# Figma Pilot API
+
+All functions are async and available on the \`figma\` object.
+
+## Target Specifiers
+Used in target, parent parameters:
+- "selection" - currently selected element(s)
+- "name:ElementName" - find by name (recommended)
+- "123:456" - node ID
+- "page" - entire page (for accessibility checks)
+
+## figma.create()
+
+Create elements in Figma.
+
+### Basic Parameters
+| Param | Type | Description |
+|-------|------|-------------|
+| type | string | REQUIRED: frame, text, rect, ellipse, line, card, button, form, nav, input |
+| name | string | Element name |
+| width | number | Width in pixels |
+| height | number | Height in pixels |
+| x | number | X position |
+| y | number | Y position |
+| parent | string | Parent container (ID, 'selection', or 'name:ElementName') |
+
+### Fill & Stroke
+| Param | Type | Description |
+|-------|------|-------------|
+| fill | string | Hex color: '#FF0000' (NOT an object!) |
+| stroke | string | Stroke color hex |
+| strokeWidth | number | Stroke width |
+| strokeAlign | string | 'INSIDE', 'OUTSIDE', 'CENTER' |
+| dashPattern | number[] | e.g., [5, 5] for dashed |
+| strokeCap | string | 'NONE', 'ROUND', 'SQUARE', 'ARROW_EQUILATERAL' |
+
+### Corner Radius
+| Param | Type | Description |
+|-------|------|-------------|
+| cornerRadius | number | Uniform radius |
+| topLeftRadius | number | Individual corners |
+| topRightRadius | number | |
+| bottomLeftRadius | number | |
+| bottomRightRadius | number | |
+
+### Text (for type: 'text')
+| Param | Type | Description |
+|-------|------|-------------|
+| content | string | Text content |
+| fontSize | number | Font size |
+| fontWeight | number | 100-900 (400=Regular, 700=Bold) |
+| fontFamily | string | 'Inter', 'Roboto', etc. |
+| textColor | string | Text color hex (preferred over fill) |
+| textAlign | string | 'LEFT', 'CENTER', 'RIGHT', 'JUSTIFIED' |
+| maxWidth | number | Max width for text wrapping |
+| lineHeight | number | Line height in pixels |
+| letterSpacing | number | Letter spacing |
+
+### Layout (Auto-layout)
+| Param | Type | Description |
+|-------|------|-------------|
+| layout | object | See layout object below |
+| layoutSizingHorizontal | string | 'FIXED', 'HUG', 'FILL' |
+| layoutSizingVertical | string | 'FIXED', 'HUG', 'FILL' |
+
+Layout object:
+\`\`\`javascript
+layout: {
+  direction: 'row' | 'column',
+  gap: number,
+  padding: number | { top, right, bottom, left },
+  alignItems: 'start' | 'center' | 'end' | 'baseline',
+  justifyContent: 'start' | 'center' | 'end' | 'space-between',
+  wrap: boolean
+}
+\`\`\`
+
+### Gradient (replaces fill)
+\`\`\`javascript
+gradient: {
+  type: 'LINEAR' | 'RADIAL' | 'ANGULAR' | 'DIAMOND',
+  angle: number,  // degrees, for LINEAR
+  stops: [
+    { position: 0, color: '#FF0000' },
+    { position: 1, color: '#0000FF' }
+  ]
+}
+\`\`\`
+
+### Effects (shadows, blur)
+\`\`\`javascript
+effects: [
+  {
+    type: 'DROP_SHADOW' | 'INNER_SHADOW' | 'LAYER_BLUR' | 'BACKGROUND_BLUR',
+    color: '#00000040',  // hex with alpha
+    offset: { x: 0, y: 4 },
+    radius: 12,
+    spread: 0
+  }
+]
+\`\`\`
+
+### Transform
+| Param | Type | Description |
+|-------|------|-------------|
+| rotation | number | Degrees |
+| blendMode | string | 'NORMAL', 'MULTIPLY', 'SCREEN', 'OVERLAY', etc. |
+| opacity | number | 0-1 |
+
+### Children (nested elements)
+\`\`\`javascript
+children: [
+  { type: 'text', content: 'Hello', fontSize: 16 },
+  { type: 'rect', width: 50, height: 50, fill: '#FF0000' }
+]
+\`\`\`
+
+### Example
+\`\`\`javascript
+await figma.create({
+  type: 'card',
+  name: 'User Card',
+  width: 320,
+  fill: '#FFFFFF',
+  cornerRadius: 12,
+  layout: { direction: 'column', gap: 16, padding: 24 },
+  effects: [{ type: 'DROP_SHADOW', color: '#00000020', offset: {x:0,y:4}, radius: 16 }],
+  children: [
+    { type: 'text', content: 'John Doe', fontSize: 20, fontWeight: 600 },
+    { type: 'text', content: 'john@example.com', fontSize: 14, textColor: '#666666' }
+  ]
+});
+\`\`\`
+
+## figma.modify()
+
+Modify existing elements.
+
+\`\`\`javascript
+await figma.modify({
+  target: 'selection',  // or 'name:ElementName' or nodeId
+  fill: '#FF0000',
+  width: 200,
+  cornerRadius: 8,
+  opacity: 0.8
+});
+\`\`\`
+
+Supports: name, width, height, x, y, fill, stroke, strokeWidth, cornerRadius, opacity, visible, locked, content, fontSize, fontFamily, fontWeight, textColor, layout
+
+## figma.query()
+
+Get element info.
+\`\`\`javascript
+const { nodes } = await figma.query({ target: 'selection' });
+for (const node of nodes) {
+  console.log(node.name, node.type, node.width, node.height);
+}
+\`\`\`
+
+## figma.delete()
+\`\`\`javascript
+await figma.delete({ target: 'name:OldElement' });
+\`\`\`
+
+## figma.append()
+Move element into container.
+\`\`\`javascript
+await figma.append({ target: 'selection', parent: 'name:Container' });
+\`\`\`
+
+## Components
+
+\`\`\`javascript
+// List components
+const { components } = await figma.listComponents({ filter: 'Button' });
+
+// Create instance
+await figma.instantiate({ component: 'name:Button/Primary', x: 100, y: 100 });
+
+// Convert to component
+await figma.toComponent({ target: 'selection', name: 'Card/Default' });
+
+// Create variants
+await figma.createVariants({ target: 'selection', property: 'state', values: ['default', 'hover'] });
+\`\`\`
+
+## Accessibility
+\`\`\`javascript
+const result = await figma.accessibility({ target: 'page', level: 'AA', autoFix: true });
+console.log(\`Fixed \${result.fixedCount} of \${result.totalIssues} issues\`);
+\`\`\`
+
+## Design Tokens
+\`\`\`javascript
+await figma.createToken({ collection: 'colors', name: 'primary', type: 'COLOR', value: '#0066FF' });
+await figma.bindToken({ target: 'selection', property: 'fill', token: 'colors/primary' });
+\`\`\`
+
+## Export
+\`\`\`javascript
+await figma.export({ target: 'selection', format: 'png', scale: 2 });
+\`\`\`
+
+## Tips
+- fill is a HEX STRING like '#FF0000', NOT an object
+- Use gradient object for gradient fills (not fill)
+- Use textColor for text instead of fill
+- Use children for nested elements
+- Name elements for easy targeting later
+
+## More Documentation
+For advanced patterns, detailed examples, and edge cases, read the figma-pilot skill:
+- Look for "figma-pilot" in your available skills list
+- Read SKILL.md for overview
+- Read rules/*.md for detailed API docs (create.md, modify.md, layout.md, gradients.md, effects.md, fonts.md, components.md)
+`;
 
 const TOOLS: Tool[] = [
   {
@@ -375,366 +595,150 @@ const TOOLS: Tool[] = [
     },
   },
   {
-    name: "figma_list_components",
-    description: "List all available components in the Figma file. Use this to discover reusable components before creating instances.",
+    name: "figma_execute",
+    description: `Execute JavaScript code with Figma Pilot APIs.
+
+IMPORTANT: Before writing complex code, call figma_get_api_docs first to get correct parameter syntax!
+
+Key API syntax (call figma_get_api_docs for full details):
+- figma.create({ type, name?, width?, height?, x?, y?, fill?, layout?, children?, gradient?, effects? })
+  - type: 'frame'|'text'|'rect'|'ellipse'|'line'|'card'|'button'|'nav'|'input'
+  - fill: hex string like '#FF0000' (NOT an object)
+  - gradient: { type: 'LINEAR'|'RADIAL', angle?, stops: [{position, color}] }
+  - layout: { direction: 'row'|'column', gap?, padding?, alignItems?, justifyContent? }
+  - effects: [{ type: 'DROP_SHADOW', color, offset: {x,y}, radius, spread? }]
+- figma.modify({ target, fill?, width?, height?, ... })
+- figma.query({ target }) → { node, nodes[] }
+- figma.delete({ target })
+- figma.export({ target, format: 'png'|'svg'|'pdf', scale? })
+
+Target formats: 'selection', 'name:ElementName', or node ID like '123:456'
+
+Example:
+\`\`\`javascript
+// Create a card with shadow
+await figma.create({
+  type: 'card',
+  name: 'My Card',
+  fill: '#FFFFFF',
+  effects: [{ type: 'DROP_SHADOW', color: '#00000040', offset: {x:0,y:4}, radius: 12 }],
+  children: [
+    { type: 'text', content: 'Hello', fontSize: 24 }
+  ]
+});
+\`\`\`
+
+For advanced patterns, READ the figma-pilot skill files (look for "figma-pilot" in your skills, then read rules/*.md)`,
     inputSchema: {
       type: "object",
       properties: {
-        filter: {
+        code: {
           type: "string",
-          description: "Optional filter to search components by name (case-insensitive)",
+          description: "JavaScript code to execute. Use async/await for API calls. Use console.log() for output.",
         },
       },
+      required: ["code"],
+    },
+  },
+  {
+    name: "figma_get_api_docs",
+    description: `Get detailed API documentation for figma_execute. ALWAYS call this BEFORE writing complex figma_execute code to ensure correct syntax!
+
+The docs reference the figma-pilot skill for advanced patterns. Look for "figma-pilot" in your available skills and READ rules/*.md for detailed examples and edge cases.`,
+    inputSchema: {
+      type: "object",
+      properties: {},
       required: [],
-    },
-  },
-  {
-    name: "figma_create",
-    description: "Create a new element in Figma. Supports frames, text, rectangles, ellipses, and semantic types like card, button, nav.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        // Basic properties
-        type: {
-          type: "string",
-          enum: ["frame", "text", "rect", "ellipse", "line", "card", "button", "form", "nav", "input"],
-          description: "Element type to create",
-        },
-        name: { type: "string", description: "Name for the element" },
-        width: { type: "number", description: "Width in pixels" },
-        height: { type: "number", description: "Height in pixels" },
-        x: { type: "number", description: "X position" },
-        y: { type: "number", description: "Y position" },
-        parent: { type: "string", description: "Parent element (ID, 'selection', or 'name:ElementName')" },
-        
-        // Fill and stroke
-        fill: { type: "string", description: "Fill color (hex, e.g., '#FF0000')" },
-        stroke: { type: "string", description: "Stroke color (hex)" },
-        strokeWidth: { type: "number", description: "Stroke width" },
-        strokeAlign: { type: "string", enum: ["INSIDE", "OUTSIDE", "CENTER"], description: "Stroke alignment" },
-        strokeCap: { type: "string", enum: ["NONE", "ROUND", "SQUARE", "ARROW_LINES", "ARROW_EQUILATERAL"], description: "Stroke cap style" },
-        strokeJoin: { type: "string", enum: ["MITER", "BEVEL", "ROUND"], description: "Stroke join style" },
-        dashPattern: { type: "array", items: { type: "number" }, description: "Dash pattern, e.g., [5, 5] for dashed line" },
-        
-        // Corner radius
-        cornerRadius: { type: "number", description: "Uniform corner radius" },
-        topLeftRadius: { type: "number", description: "Top-left corner radius" },
-        topRightRadius: { type: "number", description: "Top-right corner radius" },
-        bottomLeftRadius: { type: "number", description: "Bottom-left corner radius" },
-        bottomRightRadius: { type: "number", description: "Bottom-right corner radius" },
-        
-        // Text properties
-        content: { type: "string", description: "Text content (for text elements)" },
-        fontSize: { type: "number", description: "Font size (for text elements)" },
-        fontWeight: { type: "number", description: "Font weight 100-900 (for text elements)" },
-        fontFamily: { type: "string", description: "Font family name (e.g., 'Inter', 'Roboto', 'Noto Sans SC')" },
-        textColor: { type: "string", description: "Text color (hex). Preferred over 'fill' for text elements." },
-        textAlign: { type: "string", enum: ["LEFT", "CENTER", "RIGHT", "JUSTIFIED"], description: "Text alignment" },
-        textAutoResize: { type: "string", enum: ["WIDTH_AND_HEIGHT", "HEIGHT", "TRUNCATE", "NONE"], description: "Text auto-resize mode" },
-        maxWidth: { type: "number", description: "Max width for text wrapping" },
-        lineHeight: { type: "number", description: "Line height in pixels" },
-        letterSpacing: { type: "number", description: "Letter spacing in pixels" },
-        textDecoration: { type: "string", enum: ["NONE", "UNDERLINE", "STRIKETHROUGH"], description: "Text decoration" },
-        textCase: { type: "string", enum: ["ORIGINAL", "UPPER", "LOWER", "TITLE"], description: "Text case transformation" },
-        
-        // Layout
-        layout: {
-          type: "object",
-          description: "Auto-layout configuration",
-          properties: {
-            direction: { type: "string", enum: ["row", "column"] },
-            gap: { type: "number" },
-            padding: { type: "number", description: "Uniform padding, or use object for individual sides" },
-            alignItems: { type: "string", enum: ["start", "center", "end", "baseline"] },
-            justifyContent: { type: "string", enum: ["start", "center", "end", "space-between", "space-around"] },
-            wrap: { type: "boolean", description: "Enable wrapping for multi-row/column layouts" },
-          },
-        },
-        layoutSizingHorizontal: { type: "string", enum: ["FIXED", "HUG", "FILL"], description: "Horizontal sizing in auto-layout" },
-        layoutSizingVertical: { type: "string", enum: ["FIXED", "HUG", "FILL"], description: "Vertical sizing in auto-layout" },
-        layoutPositioning: { type: "string", enum: ["AUTO", "ABSOLUTE"], description: "Positioning mode within auto-layout" },
-        
-        // Effects
-        effects: {
-          type: "array",
-          description: "Visual effects (shadows, blur)",
-          items: {
-            type: "object",
-            properties: {
-              type: { type: "string", enum: ["DROP_SHADOW", "INNER_SHADOW", "LAYER_BLUR", "BACKGROUND_BLUR"] },
-              color: { type: "string", description: "Effect color (hex with alpha, e.g., '#00000040')" },
-              offset: { type: "object", properties: { x: { type: "number" }, y: { type: "number" } } },
-              radius: { type: "number" },
-              spread: { type: "number" },
-            },
-          },
-        },
-        
-        // Gradient
-        gradient: {
-          type: "object",
-          description: "Gradient fill (replaces solid fill)",
-          properties: {
-            type: { type: "string", enum: ["LINEAR", "RADIAL", "ANGULAR", "DIAMOND"] },
-            angle: { type: "number", description: "Angle in degrees (for LINEAR gradient)" },
-            stops: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  position: { type: "number", description: "Position 0-1" },
-                  color: { type: "string", description: "Hex color" },
-                },
-              },
-            },
-          },
-        },
-        
-        // Transform
-        rotation: { type: "number", description: "Rotation angle in degrees" },
-        blendMode: { type: "string", enum: ["PASS_THROUGH", "NORMAL", "DARKEN", "MULTIPLY", "COLOR_BURN", "LIGHTEN", "SCREEN", "COLOR_DODGE", "OVERLAY", "SOFT_LIGHT", "HARD_LIGHT", "DIFFERENCE", "EXCLUSION"], description: "Blend mode" },
-        
-        // Frame properties
-        clipsContent: { type: "boolean", description: "Clip content to frame bounds" },
-        
-        // Constraints
-        constraints: {
-          type: "object",
-          description: "Responsive constraints",
-          properties: {
-            horizontal: { type: "string", enum: ["MIN", "CENTER", "MAX", "STRETCH", "SCALE"] },
-            vertical: { type: "string", enum: ["MIN", "CENTER", "MAX", "STRETCH", "SCALE"] },
-          },
-        },
-        
-        // Size constraints
-        minWidth: { type: "number", description: "Minimum width" },
-        minHeight: { type: "number", description: "Minimum height" },
-        maxHeight: { type: "number", description: "Maximum height" },
-        
-        // Children
-        children: {
-          type: "array",
-          description: "Nested child elements to create",
-          items: { type: "object" },
-        },
-      },
-      required: ["type"],
-    },
-  },
-  {
-    name: "figma_modify",
-    description: "Modify existing elements in Figma. Target by ID, name, or selection.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        target: { type: "string", description: "Element to modify (ID, 'selection', or 'name:ElementName')" },
-        
-        // Basic properties
-        name: { type: "string", description: "New name" },
-        width: { type: "number", description: "New width" },
-        height: { type: "number", description: "New height" },
-        x: { type: "number", description: "New X position" },
-        y: { type: "number", description: "New Y position" },
-        
-        // Appearance
-        fill: { type: "string", description: "New fill color (hex)" },
-        stroke: { type: "string", description: "New stroke color (hex)" },
-        strokeWidth: { type: "number", description: "Stroke width" },
-        cornerRadius: { type: "number", description: "New corner radius" },
-        opacity: { type: "number", description: "Opacity (0-1)" },
-        visible: { type: "boolean", description: "Visibility" },
-        locked: { type: "boolean", description: "Lock/unlock element" },
-        
-        // Text properties
-        content: { type: "string", description: "New text content" },
-        fontSize: { type: "number", description: "New font size" },
-        fontFamily: { type: "string", description: "Font family name (for text elements)" },
-        fontWeight: { type: "number", description: "Font weight (for text elements)" },
-        textColor: { type: "string", description: "Text color (hex, for text elements)" },
-        
-        // Layout
-        layout: {
-          type: "object",
-          description: "Layout updates",
-          properties: {
-            direction: { type: "string", enum: ["row", "column"] },
-            gap: { type: "number" },
-            padding: { type: "number" },
-            alignItems: { type: "string", enum: ["start", "center", "end", "baseline"] },
-            justifyContent: { type: "string", enum: ["start", "center", "end", "space-between", "space-around"] },
-          },
-        },
-      },
-      required: ["target"],
-    },
-  },
-  {
-    name: "figma_delete",
-    description: "Delete elements from Figma.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        target: { type: "string", description: "Element to delete (ID, 'selection', or 'name:ElementName')" },
-      },
-      required: ["target"],
-    },
-  },
-  {
-    name: "figma_append",
-    description: "Move element(s) into a container frame.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        target: { type: "string", description: "Element to move (ID, 'selection', or 'name:ElementName')" },
-        parent: { type: "string", description: "Container to move into (ID, 'selection', or 'name:ContainerName')" },
-      },
-      required: ["target", "parent"],
-    },
-  },
-  {
-    name: "figma_instantiate",
-    description: "Create an instance of a component. Use list_components first to discover available components.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        component: { type: "string", description: "Component ID or 'name:ComponentName'" },
-        x: { type: "number", description: "X position" },
-        y: { type: "number", description: "Y position" },
-        parent: { type: "string", description: "Parent element to add instance to" },
-      },
-      required: ["component"],
-    },
-  },
-  {
-    name: "figma_query",
-    description: "Get detailed information about elements. Use target 'selection' to query currently selected elements (returns multiple nodes).",
-    inputSchema: {
-      type: "object",
-      properties: {
-        target: { type: "string", description: "Element to query (ID, 'selection', or 'name:ElementName'). Use 'selection' to get all selected elements." },
-      },
-      required: ["target"],
-    },
-  },
-  {
-    name: "figma_to_component",
-    description: "Convert an element to a reusable component.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        target: { type: "string", description: "Element to convert (ID, 'selection', or 'name:ElementName')" },
-        name: { type: "string", description: "Component name (e.g., 'Button/Primary')" },
-      },
-      required: ["target"],
-    },
-  },
-  {
-    name: "figma_create_variants",
-    description: "Create component variants with different property values.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        target: { type: "string", description: "Component to create variants from" },
-        property: { type: "string", description: "Variant property name (e.g., 'state', 'size')" },
-        values: { type: "array", items: { type: "string" }, description: "Variant values (e.g., ['default', 'hover', 'pressed'])" },
-      },
-      required: ["target", "property", "values"],
-    },
-  },
-  {
-    name: "figma_accessibility",
-    description: "Check accessibility issues and optionally fix them. Performs WCAG compliance checking for contrast ratios and touch targets.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        target: { type: "string", description: "Element to check (ID, 'selection', 'page', or 'name:ElementName')" },
-        level: { type: "string", enum: ["AA", "AAA"], description: "WCAG conformance level (default: AA)" },
-        autoFix: { type: "boolean", description: "Automatically fix issues where possible (default: false)" },
-        output: { type: "string", enum: ["json", "text"], description: "Output format (default: json)" },
-      },
-      required: ["target"],
-    },
-  },
-  {
-    name: "figma_bind_token",
-    description: "Bind a design token to a node property.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        target: { type: "string", description: "Element to bind token to (ID, 'selection', or 'name:ElementName')" },
-        property: {
-          type: "string",
-          enum: ["fill", "stroke", "fontSize", "fontFamily", "fontWeight", "cornerRadius", "gap", "padding"],
-          description: "Property to bind",
-        },
-        token: { type: "string", description: "Token name or ID" },
-      },
-      required: ["target", "property", "token"],
-    },
-  },
-  {
-    name: "figma_create_token",
-    description: "Create a new design token.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        collection: { type: "string", description: "Token collection name" },
-        name: { type: "string", description: "Token name" },
-        type: { type: "string", enum: ["COLOR", "NUMBER", "STRING", "BOOLEAN"], description: "Token type" },
-        value: {
-          description: "Token value",
-          anyOf: [{ type: "string" }, { type: "number" }, { type: "boolean" }],
-        },
-      },
-      required: ["collection", "name", "type", "value"],
-    },
-  },
-  {
-    name: "figma_sync_tokens",
-    description: "Import or export design tokens to/from JSON files.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        from: { type: "string", description: "Import from JSON file path" },
-        to: { type: "string", description: "Export to JSON file path" },
-      },
-      required: [],
-    },
-  },
-  {
-    name: "figma_export",
-    description: "Export elements as images (PNG, SVG, PDF). Use after finishing a request to review a PNG.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        target: { type: "string", description: "Element to export" },
-        format: { type: "string", enum: ["png", "svg", "pdf", "jpg"], description: "Export format" },
-        scale: { type: "number", description: "Scale factor (default: 1)" },
-      },
-      required: ["target", "format"],
     },
   },
 ];
 
-// Tool name to operation mapping
-const TOOL_OPERATION_MAP: Record<string, OperationType> = {
-  figma_status: "status",
-  figma_list_components: "list-components",
-  figma_create: "create",
-  figma_modify: "modify",
-  figma_delete: "delete",
-  figma_append: "append",
-  figma_instantiate: "instantiate",
-  figma_query: "query",
-  figma_to_component: "to-component",
-  figma_create_variants: "create-variants",
-  figma_accessibility: "accessibility",
-  figma_bind_token: "bind-token",
-  figma_create_token: "create-token",
-  figma_sync_tokens: "sync-tokens",
-  figma_export: "export",
+// Operation name mapping for the figma object
+const OPERATION_MAP: Record<string, OperationType> = {
+  status: "status",
+  query: "query",
+  create: "create",
+  modify: "modify",
+  delete: "delete",
+  append: "append",
+  listComponents: "list-components",
+  instantiate: "instantiate",
+  toComponent: "to-component",
+  createVariants: "create-variants",
+  accessibility: "accessibility",
+  createToken: "create-token",
+  bindToken: "bind-token",
+  syncTokens: "sync-tokens",
+  export: "export",
 };
+
+// ============================================================================
+// Code Execution Engine
+// ============================================================================
+
+interface ExecutionResult {
+  result?: unknown;
+  logs: string[];
+  error?: string;
+}
+
+async function executeCode(
+  code: string,
+  bridge: EmbeddedBridgeServer
+): Promise<ExecutionResult> {
+  const logs: string[] = [];
+
+  // Create the figma API object
+  const figma: Record<string, (params?: Record<string, unknown>) => Promise<unknown>> = {};
+
+  for (const [methodName, operationType] of Object.entries(OPERATION_MAP)) {
+    figma[methodName] = async (params: Record<string, unknown> = {}) => {
+      return bridge.sendRequest(operationType, params);
+    };
+  }
+
+  // Create a mock console that captures logs
+  const mockConsole = {
+    log: (...args: unknown[]) => {
+      logs.push(args.map(a => 
+        typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)
+      ).join(' '));
+    },
+    error: (...args: unknown[]) => {
+      logs.push('[ERROR] ' + args.map(a => 
+        typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)
+      ).join(' '));
+    },
+    warn: (...args: unknown[]) => {
+      logs.push('[WARN] ' + args.map(a => 
+        typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)
+      ).join(' '));
+    },
+  };
+
+  try {
+    // Create async function from code
+    const AsyncFunction = Object.getPrototypeOf(async () => {}).constructor;
+    const fn = new AsyncFunction('figma', 'console', code);
+
+    // Execute with timeout
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Execution timeout (30s)')), 30000);
+    });
+
+    const result = await Promise.race([
+      fn(figma, mockConsole),
+      timeoutPromise,
+    ]);
+
+    return { result, logs };
+  } catch (error) {
+    return {
+      logs,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
 
 // ============================================================================
 // Main
@@ -759,7 +763,14 @@ async function main() {
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
 
-    // Check if bridge/plugin is available
+    // figma_get_api_docs doesn't require connection
+    if (name === "figma_get_api_docs") {
+      return {
+        content: [{ type: "text", text: API_DOCS }],
+      };
+    }
+
+    // Check if bridge/plugin is available for other tools
     const isHealthy = await bridge.checkHealth();
     if (!isHealthy) {
       return {
@@ -773,30 +784,74 @@ async function main() {
       };
     }
 
-    const operation = TOOL_OPERATION_MAP[name];
-    if (!operation) {
-      return {
-        content: [{ type: "text", text: JSON.stringify({ error: `Unknown tool: ${name}` }) }],
-        isError: true,
-      };
+    // Handle figma_status
+    if (name === "figma_status") {
+      try {
+        const result = await bridge.sendRequest("status", {});
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      } catch (error) {
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
+          }],
+          isError: true,
+        };
+      }
     }
 
-    try {
-      const params = args || {};
-      const result = await bridge.sendRequest(operation, params as Record<string, unknown>);
+    // Handle figma_execute
+    if (name === "figma_execute") {
+      const { code } = args as { code: string };
 
-      return {
-        content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
-      };
-    } catch (error) {
+      if (!code || typeof code !== "string") {
+        return {
+          content: [{ type: "text", text: JSON.stringify({ error: "Code is required" }) }],
+          isError: true,
+        };
+      }
+
+      const result = await executeCode(code, bridge);
+
+      if (result.error) {
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify({
+              error: result.error,
+              logs: result.logs,
+            }, null, 2),
+          }],
+          isError: true,
+        };
+      }
+
+      // Format output
+      const output: Record<string, unknown> = {};
+      if (result.logs.length > 0) {
+        output.logs = result.logs;
+      }
+      if (result.result !== undefined) {
+        output.result = result.result;
+      }
+
       return {
         content: [{
           type: "text",
-          text: JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
+          text: Object.keys(output).length > 0
+            ? JSON.stringify(output, null, 2)
+            : "Executed successfully (no output)",
         }],
-        isError: true,
       };
     }
+
+    // Unknown tool
+    return {
+      content: [{ type: "text", text: JSON.stringify({ error: `Unknown tool: ${name}` }) }],
+      isError: true,
+    };
   });
 
   // Cleanup on exit
@@ -814,7 +869,7 @@ async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
 
-  console.error("figma-pilot MCP server running (bridge included)");
+  console.error("figma-pilot MCP server running (code execution mode)");
 }
 
 main().catch(console.error);

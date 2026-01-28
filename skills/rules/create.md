@@ -5,7 +5,7 @@ metadata:
   tags: create, frame, text, rect, ellipse, button, card
 ---
 
-## figma_create
+## figma.create()
 
 Create new elements in Figma. Supports frames, text, rectangles, ellipses, and semantic types.
 
@@ -43,48 +43,50 @@ See also: [layout.md](layout.md), [effects.md](effects.md), [gradients.md](gradi
 
 ### Basic Examples
 
-```typescript
+```javascript
+// Inside figma_execute:
+
 // Simple frame
-figma_create({ type: "frame", name: "Container", width: 400, height: 300 })
+await figma.create({ type: "frame", name: "Container", width: 400, height: 300 });
 
 // Text element
-figma_create({ type: "text", content: "Hello World", fontSize: 24, fill: "#333333" })
+await figma.create({ type: "text", content: "Hello World", fontSize: 24, fill: "#333333" });
 
 // Text with custom font
-figma_create({ 
+await figma.create({ 
   type: "text", 
   content: "Custom Font", 
   fontFamily: "Roboto", 
   fontWeight: 700, 
   fontSize: 32,
   textAlign: "CENTER"
-})
+});
 
 // Pre-styled button
-figma_create({ type: "button", name: "Primary Button" })
+await figma.create({ type: "button", name: "Primary Button" });
 
 // Frame with auto-layout
-figma_create({
+await figma.create({
   type: "frame",
   name: "Row",
   layout: { direction: "row", gap: 16, padding: 24 }
-})
+});
 
 // Positioned element
-figma_create({ type: "rect", width: 100, height: 100, x: 50, y: 50, fill: "#0066FF" })
+await figma.create({ type: "rect", width: 100, height: 100, x: 50, y: 50, fill: "#0066FF" });
 
 // Create inside a parent container
-figma_create({ type: "text", content: "Hello", parent: "name:Hero Section" })
-figma_create({ type: "text", content: "Hello", parent: "selection" })
-figma_create({ type: "text", content: "Hello", parent: "123:456" })
+await figma.create({ type: "text", content: "Hello", parent: "name:Hero Section" });
+await figma.create({ type: "text", content: "Hello", parent: "selection" });
 ```
 
 ### Complex Nested Layout
 
 Use the `children` parameter to create complex nested layouts in a single call.
 
-```typescript
-figma_create({
+```javascript
+// Inside figma_execute:
+await figma.create({
   type: "frame",
   name: "User Card",
   width: 320,
@@ -110,11 +112,11 @@ figma_create({
       ]
     }
   ]
-})
+});
 ```
 
 **Best Practices for Nested Layouts:**
-- Use `children` for complex layouts instead of multiple top-level calls
+- Use `children` for complex layouts instead of multiple create calls
 - Each child can have its own `children` for deep nesting
 - Name important containers for easy targeting later
 - Use auto-layout on parent frames for proper alignment

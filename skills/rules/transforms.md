@@ -22,9 +22,11 @@ Apply rotation and blend modes to elements.
 
 ### Examples
 
-```typescript
+```javascript
+// Inside figma_execute:
+
 // Rotated element
-figma_create({
+await figma.create({
   type: "rect",
   name: "Diamond",
   width: 100,
@@ -33,10 +35,10 @@ figma_create({
   rotation: 45,
   x: 100,
   y: 100
-})
+});
 
 // Blend mode overlay
-figma_create({
+await figma.create({
   type: "frame",
   name: "Overlay Container",
   width: 400,
@@ -59,5 +61,5 @@ figma_create({
       blendMode: "MULTIPLY"
     }
   ]
-})
+});
 ```

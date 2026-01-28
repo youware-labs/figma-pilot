@@ -5,13 +5,14 @@ metadata:
   tags: connection, status, health-check
 ---
 
-## figma_status
+## figma.status()
 
 Check connection status to Figma plugin. Call this first to verify the plugin is running.
 
-```typescript
-figma_status()
-// Returns: { connected: true, pluginVersion: "1.0.0" }
+```javascript
+// Use figma_status tool directly, or inside figma_execute:
+await figma.status()
+// Returns: { connected: true, pluginVersion: "1.0.0", documentName: "...", currentPage: "..." }
 ```
 
-Always call this before running other commands to ensure the connection is active.
+Always call `figma_status` before running `figma_execute` to ensure the connection is active.

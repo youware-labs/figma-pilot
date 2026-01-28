@@ -5,7 +5,7 @@ metadata:
   tags: export, png, svg, pdf, image
 ---
 
-## figma_export
+## figma.export()
 
 Export elements as images.
 
@@ -19,15 +19,18 @@ Export elements as images.
 
 ### Examples
 
-```typescript
+```javascript
+// Inside figma_execute:
+
 // Export selection as PNG
-figma_export({ target: "selection", format: "png" })
+await figma.export({ target: "selection", format: "png" });
 
 // Export as SVG
-figma_export({ target: "selection", format: "svg" })
+await figma.export({ target: "selection", format: "svg" });
 
 // Export at 2x scale
-figma_export({ target: "selection", format: "png", scale: 2 })
+const result = await figma.export({ target: "selection", format: "png", scale: 2 });
+console.log(`Exported ${result.size} bytes`);
 ```
 
-**Tip**: After finishing a requested change (not every step), export a PNG for review using `figma_export({ target: "selection", format: "png", scale: 2 })`.
+**Tip**: After finishing a requested change (not every step), export a PNG for review.

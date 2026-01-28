@@ -53,27 +53,27 @@ Once the MCP is configured and the Figma plugin is running, you can ask your AI 
 
 ## Available Tools
 
+figma-pilot uses **code execution mode** for maximum efficiency:
+
 | Tool | Description |
 |------|-------------|
 | `figma_status` | Check connection to Figma plugin |
-| `figma_create` | Create elements (frames, text, shapes, buttons, cards) |
-| `figma_modify` | Modify existing elements |
-| `figma_delete` | Delete elements |
-| `figma_query` | Get element details |
-| `figma_selection` | Get current selection |
-| `figma_append` | Move elements into a container |
-| `figma_list_components` | List available components |
-| `figma_instantiate` | Create component instances |
-| `figma_to_component` | Convert to component |
-| `figma_create_variants` | Create component variants |
-| `figma_ensure_accessibility` | Check/fix accessibility issues |
-| `figma_export` | Export as PNG/SVG/PDF (use after finishing a request to review PNG) |
+| `figma_execute` | Execute JavaScript with full Figma API access |
+| `figma_get_api_docs` | Get detailed API documentation |
+
+### Why Only 3 Tools?
+
+Traditional MCP servers expose many tools, but each tool definition consumes context tokens. With code execution:
+- **90%+ fewer tokens** in tool definitions
+- **Batch operations** in a single call
+- **Data filtering** before returning results
+- **Complex logic** with loops and conditionals
 
 ## Example Usage
 
-```typescript
-// Create a card with auto-layout
-figma_create({
+```javascript
+// figma_execute: Create a card with auto-layout
+await figma.create({
   type: "card",
   name: "User Card",
   width: 320,
@@ -82,17 +82,43 @@ figma_create({
     { type: "text", content: "John Doe", fontSize: 18, fontWeight: 600 },
     { type: "text", content: "john@example.com", fontSize: 14, fill: "#666666" }
   ]
-})
+});
 
-// Modify selection
-figma_modify({ target: "selection", fill: "#0066FF", cornerRadius: 8 })
+// figma_execute: Batch modify all selected rectangles
+const { nodes } = await figma.query({ target: "selection" });
+for (const node of nodes.filter(n => n.type === "RECTANGLE")) {
+  await figma.modify({ target: node.id, fill: "#0066FF", cornerRadius: 8 });
+}
 
-// Check accessibility
-figma_ensure_accessibility({ target: "page", level: "AA", autoFix: true })
+// figma_execute: Check and fix accessibility
+const result = await figma.accessibility({ target: "page", level: "AA", autoFix: true });
+console.log(`Fixed ${result.fixedCount} issues`);
 
-// After finishing a requested change, export PNG for review
-figma_export({ target: "selection", format: "png", scale: 2 })
+// figma_execute: Export for review
+await figma.export({ target: "selection", format: "png", scale: 2 });
 ```
+
+## Available APIs
+
+All operations are available on the `figma` object inside `figma_execute`:
+
+- `figma.status()` - Check connection
+- `figma.query({ target })` - Query elements
+- `figma.create({ type, ... })` - Create elements
+- `figma.modify({ target, ... })` - Modify elements
+- `figma.delete({ target })` - Delete elements
+- `figma.append({ target, parent })` - Move into container
+- `figma.listComponents({ filter? })` - List components
+- `figma.instantiate({ component })` - Create instance
+- `figma.toComponent({ target })` - Convert to component
+- `figma.createVariants({ ... })` - Create variants
+- `figma.accessibility({ target })` - WCAG checking
+- `figma.createToken({ ... })` - Create design token
+- `figma.bindToken({ ... })` - Bind token
+- `figma.syncTokens({ ... })` - Import/export tokens
+- `figma.export({ target, format })` - Export image
+
+Use `figma_get_api_docs` to get detailed parameter documentation.
 
 ## How It Works
 

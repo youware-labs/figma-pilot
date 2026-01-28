@@ -32,43 +32,45 @@ figma-pilot supports custom fonts through the `fontFamily` and `fontWeight` para
 
 ### Examples
 
-```typescript
+```javascript
+// Inside figma_execute:
+
 // Default Inter font
-figma_create({
+await figma.create({
   type: "text",
   content: "Default Inter Text",
   fontSize: 16
-})
+});
 
 // Using Roboto Bold
-figma_create({
+await figma.create({
   type: "text",
   content: "Roboto Bold",
   fontFamily: "Roboto",
   fontWeight: 700,
   fontSize: 24
-})
+});
 
 // Using system fonts
-figma_create({
+await figma.create({
   type: "text",
   content: "System Font",
   fontFamily: "Arial",
   fontWeight: 400,
   fontSize: 16
-})
+});
 
 // Light weight text
-figma_create({
+await figma.create({
   type: "text",
   content: "Light Text",
   fontFamily: "Inter",
   fontWeight: 300,
   fontSize: 18
-})
+});
 
 // Multiple text styles in a card
-figma_create({
+await figma.create({
   type: "card",
   name: "Typography Demo",
   width: 300,
@@ -77,7 +79,7 @@ figma_create({
     { type: "text", content: "Subheading", fontFamily: "Inter", fontWeight: 500, fontSize: 16 },
     { type: "text", content: "Body text goes here", fontFamily: "Inter", fontWeight: 400, fontSize: 14, fill: "#666666" }
   ]
-})
+});
 ```
 
 ### Font Fallback

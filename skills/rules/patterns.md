@@ -7,9 +7,11 @@ metadata:
 
 ## Card Component
 
-```typescript
+```javascript
+// Inside figma_execute:
+
 // 1. Create the card layout
-figma_create({
+await figma.create({
   type: "card",
   name: "Card",
   width: 320,
@@ -17,13 +19,13 @@ figma_create({
     { type: "text", name: "Title", content: "Card Title", fontSize: 18, fontWeight: 600 },
     { type: "text", name: "Description", content: "Card description goes here", fontSize: 14, fill: "#666666" }
   ]
-})
+});
 
 // 2. Convert to component
-figma_to_component({ target: "selection", name: "Card/Default" })
+await figma.toComponent({ target: "selection", name: "Card/Default" });
 
 // 3. Create variants
-figma_create_variants({ target: "selection", property: "state", values: ["default", "hover"] })
+await figma.createVariants({ target: "selection", property: "state", values: ["default", "hover"] });
 ```
 
 **Key Points:**
@@ -35,8 +37,9 @@ figma_create_variants({ target: "selection", property: "state", values: ["defaul
 
 ## Navigation Bar
 
-```typescript
-figma_create({
+```javascript
+// Inside figma_execute:
+await figma.create({
   type: "nav",
   name: "Navigation",
   width: 1200,
@@ -57,7 +60,7 @@ figma_create({
       children: [{ type: "text", content: "Sign Up", fill: "#FFFFFF" }]
     }
   ]
-})
+});
 ```
 
 **Key Points:**
@@ -71,30 +74,32 @@ figma_create({
 
 When creating multiple sections for a page, always specify position to stack them vertically:
 
-```typescript
+```javascript
+// Inside figma_execute:
+
 // Navigation at top (y=0)
-figma_create({
+await figma.create({
   type: "frame", name: "Nav", width: 1440, height: 80,
   x: 0, y: 0, fill: "#FFFFFF"
-})
+});
 
 // Hero section below nav (y=80)
-figma_create({
+await figma.create({
   type: "frame", name: "Hero", width: 1440, height: 600,
   x: 0, y: 80, fill: "#F5F5F5"
-})
+});
 
 // Features section (y=680)
-figma_create({
+await figma.create({
   type: "frame", name: "Features", width: 1440, height: 400,
   x: 0, y: 680, fill: "#FFFFFF"
-})
+});
 
 // Footer (y=1080)
-figma_create({
+await figma.create({
   type: "frame", name: "Footer", width: 1440, height: 200,
   x: 0, y: 1080, fill: "#333333"
-})
+});
 ```
 
 **Key Points:**

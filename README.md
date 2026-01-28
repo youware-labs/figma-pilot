@@ -123,58 +123,118 @@ npx @youware-labs/figma-pilot-mcp
 
 ## Usage Examples
 
-### Creating a Card Component
+### Natural Language (AI handles the code)
+
+You can still use natural language - the AI will generate the appropriate code:
 
 ```
 Create a card component with a header and body section. The header should have a title and the body should have descriptive text.
 ```
 
-### Modifying Elements
-
 ```
 Change the selected frame's background color to blue and add rounded corners.
 ```
 
-### Building a Navigation Bar
+### Direct Code Examples
 
-```
-Create a navigation bar with a logo on the left, menu items in the center (Home, About, Contact), and a Sign Up button on the right.
+Or see what the AI generates under the hood:
+
+**Creating a Card Component:**
+```javascript
+// figma_execute
+await figma.create({
+  type: 'card',
+  name: 'User Card',
+  children: [
+    { type: 'text', content: 'Card Title', fontSize: 18, fontWeight: 600 },
+    { type: 'text', content: 'Card description goes here', fontSize: 14, fill: '#666' }
+  ]
+});
 ```
 
-### Accessibility Check
-
+**Batch Modifying Elements:**
+```javascript
+// figma_execute - modify all rectangles in selection
+const { nodes } = await figma.query({ target: 'selection' });
+const rects = nodes.filter(n => n.type === 'RECTANGLE');
+for (const rect of rects) {
+  await figma.modify({ target: rect.id, fill: '#0066FF', cornerRadius: 8 });
+}
+console.log(`Modified ${rects.length} rectangles`);
 ```
-Check accessibility for the current selection and fix any issues automatically.
+
+**Accessibility Check with Auto-fix:**
+```javascript
+// figma_execute
+const result = await figma.accessibility({ 
+  target: 'page', 
+  level: 'AA', 
+  autoFix: true 
+});
+console.log(`Fixed ${result.fixedCount} of ${result.totalIssues} issues`);
 ```
 
-### Export for Review
-
-After completing a design, export it for review:
-```
-Export the current selection as a PNG at 2x scale
+**Export for Review:**
+```javascript
+// figma_execute
+const exported = await figma.export({ 
+  target: 'selection', 
+  format: 'png', 
+  scale: 2 
+});
+console.log(`Exported ${exported.size} bytes`);
 ```
 
 ## Available MCP Tools
 
+figma-pilot uses a **code execution mode** for maximum efficiency. Instead of exposing 15+ individual tools, it provides just 3:
+
 | Tool | Description |
 |------|-------------|
 | `figma_status` | Check connection status to Figma plugin |
-| `figma_query` | Query elements by ID, name, or selection |
-| `figma_create` | Create elements (frame, text, rectangle, button, card, etc.) |
-| `figma_modify` | Modify element properties |
-| `figma_delete` | Delete elements |
-| `figma_append` | Move elements into a container |
-| `figma_list_components` | List available components |
-| `figma_instantiate` | Create component instance |
-| `figma_to_component` | Convert selection to component |
-| `figma_create_variants` | Create component variants |
-| `figma_accessibility` | Check and optionally fix accessibility issues (WCAG) |
-| `figma_bind_token` | Bind a design token to a node |
-| `figma_create_token` | Create a design token |
-| `figma_sync_tokens` | Import/export design tokens |
-| `figma_export` | Export as image (PNG/SVG/PDF/JPG) |
+| `figma_execute` | Execute JavaScript code with full Figma API access |
+| `figma_get_api_docs` | Get detailed API documentation |
 
-For detailed tool documentation, see [skills/SKILL.md](./skills/SKILL.md).
+### Why Code Execution Mode?
+
+Traditional MCP tools require loading all tool definitions upfront and passing intermediate results through the context window. This becomes inefficient with many tools.
+
+With code execution mode:
+- **90%+ fewer tokens** - 3 tool definitions instead of 15+
+- **Batch operations** - Modify 100 elements in one call instead of 100 tool calls
+- **Data filtering** - Filter query results before returning to context
+- **Complex workflows** - Loops, conditionals, and error handling in code
+
+### Available APIs in `figma_execute`
+
+The `figma` object provides all operations:
+
+```javascript
+// Core operations
+figma.status()                    // Check connection
+figma.query({ target })           // Query elements
+figma.create({ type, ... })       // Create elements
+figma.modify({ target, ... })     // Modify elements
+figma.delete({ target })          // Delete elements
+figma.append({ target, parent })  // Move into container
+
+// Components
+figma.listComponents({ filter? }) // List components
+figma.instantiate({ component })  // Create instance
+figma.toComponent({ target })     // Convert to component
+figma.createVariants({ ... })     // Create variants
+
+// Accessibility & Tokens
+figma.accessibility({ target })   // WCAG checking
+figma.createToken({ ... })        // Create design token
+figma.bindToken({ ... })          // Bind token to element
+figma.syncTokens({ ... })         // Import/export tokens
+
+// Export
+figma.export({ target, format })  // Export as image
+```
+
+For detailed API documentation, see [skills/SKILL.md](./skills/SKILL.md).
 
 ## Supported MCP Clients
 

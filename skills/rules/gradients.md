@@ -20,9 +20,11 @@ Create gradient fills instead of solid colors using the `gradient` parameter.
 
 ### Examples
 
-```typescript
+```javascript
+// Inside figma_execute:
+
 // Linear gradient (left to right)
-figma_create({
+await figma.create({
   type: "frame",
   name: "Gradient Banner",
   width: 800,
@@ -35,10 +37,10 @@ figma_create({
       { position: 1, color: "#764BA2" }
     ]
   }
-})
+});
 
 // Diagonal gradient
-figma_create({
+await figma.create({
   type: "rect",
   name: "Diagonal Gradient",
   width: 200,
@@ -52,10 +54,10 @@ figma_create({
       { position: 1, color: "#4ECDC4" }
     ]
   }
-})
+});
 
 // Radial gradient
-figma_create({
+await figma.create({
   type: "ellipse",
   name: "Radial Glow",
   width: 200,
@@ -67,10 +69,10 @@ figma_create({
       { position: 1, color: "#0066FF" }
     ]
   }
-})
+});
 
 // Angular gradient (conic)
-figma_create({
+await figma.create({
   type: "ellipse",
   name: "Color Wheel",
   width: 200,
@@ -87,5 +89,5 @@ figma_create({
       { position: 1, color: "#FF0000" }
     ]
   }
-})
+});
 ```

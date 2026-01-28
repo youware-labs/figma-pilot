@@ -5,19 +5,25 @@ metadata:
   tags: query, element, details, selection
 ---
 
-## figma_query
+## figma.query()
 
-Get detailed information about elements. Replaces the old `figma_selection` tool.
+Get detailed information about elements.
 
-```typescript
+```javascript
+// Inside figma_execute:
+
 // Query current selection (returns all selected elements)
-figma_query({ target: "selection" })
+const { nodes } = await figma.query({ target: "selection" });
 
 // Query by node ID
-figma_query({ target: "123:456" })
+const { node } = await figma.query({ target: "123:456" });
 
 // Query by element name
-figma_query({ target: "name:Hero Section" })
+const { node } = await figma.query({ target: "name:Hero Section" });
+
+// Filter and process results
+const rects = nodes.filter(n => n.type === "RECTANGLE");
+console.log(`Found ${rects.length} rectangles`);
 ```
 
 ### Target Options

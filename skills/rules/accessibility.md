@@ -5,7 +5,7 @@ metadata:
   tags: accessibility, wcag, a11y, contrast
 ---
 
-## figma_accessibility
+## figma.accessibility()
 
 Unified accessibility tool - check and optionally fix accessibility issues.
 
@@ -25,23 +25,26 @@ Unified accessibility tool - check and optionally fix accessibility issues.
 
 ### Examples
 
-```typescript
+```javascript
+// Inside figma_execute:
+
 // Audit current selection (read-only check)
-figma_accessibility({ target: "selection" })
+const result = await figma.accessibility({ target: "selection" });
 
 // Audit with AAA level
-figma_accessibility({ target: "selection", level: "AAA" })
+await figma.accessibility({ target: "selection", level: "AAA" });
 
 // Audit and auto-fix issues
-figma_accessibility({ target: "selection", level: "AA", autoFix: true })
+const fixed = await figma.accessibility({ target: "selection", level: "AA", autoFix: true });
+console.log(`Fixed ${fixed.fixedCount} of ${fixed.totalIssues} issues`);
 
 // Audit entire page with text output
-figma_accessibility({ target: "page", output: "text" })
+await figma.accessibility({ target: "page", output: "text" });
 ```
 
 ### Response
 
-```typescript
+```javascript
 {
   issues: AccessibilityIssue[],
   totalIssues: number,
@@ -54,13 +57,18 @@ figma_accessibility({ target: "page", output: "text" })
 
 ## Accessibility Workflow
 
-```typescript
+```javascript
+// Inside figma_execute - complete accessibility workflow:
+
 // 1. Audit the page
-figma_accessibility({ target: "page", level: "AA" })
+const audit = await figma.accessibility({ target: "page", level: "AA" });
+console.log(`Found ${audit.totalIssues} issues`);
 
 // 2. Fix issues automatically
-figma_accessibility({ target: "page", level: "AA", autoFix: true })
+const fixed = await figma.accessibility({ target: "page", level: "AA", autoFix: true });
+console.log(`Fixed ${fixed.fixedCount} issues`);
 
 // 3. Verify fixes
-figma_accessibility({ target: "page", level: "AA" })
+const verify = await figma.accessibility({ target: "page", level: "AA" });
+console.log(`Remaining issues: ${verify.totalIssues}`);
 ```

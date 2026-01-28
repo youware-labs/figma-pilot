@@ -20,10 +20,11 @@ Many tools accept a `target` or `parent` parameter. Valid values:
 
 Use `"name:"` prefix for targeting - names are more stable than IDs.
 
-```typescript
-figma_modify({ target: "name:Navigation", fill: "#FFFFFF" })
-figma_create({ type: "text", content: "Hello", parent: "name:Hero" })
-figma_append({ target: "selection", parent: "name:Container" })
+```javascript
+// Inside figma_execute:
+await figma.modify({ target: "name:Navigation", fill: "#FFFFFF" });
+await figma.create({ type: "text", content: "Hello", parent: "name:Hero" });
+await figma.append({ target: "selection", parent: "name:Container" });
 ```
 
 **Best Practices:**
