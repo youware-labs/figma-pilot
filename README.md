@@ -69,7 +69,19 @@ Config locations:
 - **Claude Desktop**: `~/.config/claude/claude_desktop_config.json` (macOS/Linux)
 - **Cursor**: `~/.cursor/mcp.json`
 
-### 2. Install Figma Plugin
+### 2. Install Skill (Recommended)
+
+The `skills/` folder contains API documentation that helps AI agents use `figma_execute` correctly. Install it to your AI client's skill directory:
+
+| AI Client | Skill Directory |
+|-----------|-----------------|
+| Claude Code / Codex | `~/.codex/skills/figma-pilot` |
+| Cursor | `~/.cursor/skills-cursor/figma-pilot` |
+| Claude Desktop | `~/.claude/skills/figma-pilot` |
+
+After installation, restart your AI client to pick up the new skill.
+
+### 3. Install Figma Plugin
 
 1. Download `figma-pilot-plugin-vX.X.X.zip` from [Releases](https://github.com/youware-labs/figma-pilot/releases)
 2. Unzip the file
@@ -77,7 +89,7 @@ Config locations:
 4. Select `manifest.json` from the unzipped folder
 5. Run: **Plugins > Development > figma-pilot**
 
-### 3. Verify Connection
+### 4. Verify Connection
 
 Ask your AI agent:
 ```

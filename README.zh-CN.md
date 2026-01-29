@@ -69,7 +69,19 @@ claude mcp add figma-pilot -- npx @youware-labs/figma-pilot-mcp
 - **Claude Desktop**: `~/.config/claude/claude_desktop_config.json` (macOS/Linux)
 - **Cursor**: `~/.cursor/mcp.json`
 
-### 2. 安装 Figma 插件
+### 2. 安装 Skill（推荐）
+
+`skills/` 文件夹包含 API 文档，帮助 AI Agent 正确使用 `figma_execute`。将其安装到你的 AI 客户端的 skill 目录：
+
+| AI 客户端 | Skill 目录 |
+|-----------|-----------|
+| Claude Code / Codex | `~/.codex/skills/figma-pilot` |
+| Cursor | `~/.cursor/skills-cursor/figma-pilot` |
+| Claude Desktop | `~/.claude/skills/figma-pilot` |
+
+安装完成后，重启你的 AI 客户端以加载新的 skill。
+
+### 3. 安装 Figma 插件
 
 1. 从 [Releases](https://github.com/youware-labs/figma-pilot/releases) 下载 `figma-pilot-plugin-vX.X.X.zip`
 2. 解压文件
@@ -77,7 +89,7 @@ claude mcp add figma-pilot -- npx @youware-labs/figma-pilot-mcp
 4. 选择解压后的 `manifest.json`
 5. 运行: **Plugins > Development > figma-pilot**
 
-### 3. 验证连接
+### 4. 验证连接
 
 让你的 AI Agent：
 ```
