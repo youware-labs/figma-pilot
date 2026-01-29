@@ -192,14 +192,14 @@ bun install && bun run build
 ```bash
 # Build and package
 bun run build
-./scripts/package-plugin.sh 0.1.6
+./scripts/package-plugin.sh 0.x.x
 
 # Publish to npm
 cd packages/mcp-server && npm publish --access public
 
 # Create GitHub release
-gh release create v0.1.6 dist/releases/figma-pilot-plugin-v0.1.6.zip \
-  --title "v0.1.6" \
+gh release create v0.x.x dist/releases/figma-pilot-plugin-v0.x.x.zip \
+  --title "v0.x.x" \
   --notes "Release notes here"
 ```
 
