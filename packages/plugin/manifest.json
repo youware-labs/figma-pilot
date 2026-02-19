@@ -12,5 +12,5 @@
     "allowedDomains": ["http://localhost:38451"],
     "reasoning": "Required for CLI bridge communication"
   },
-  "permissions": ["currentuser"]
+  "permissions": ["currentuser", "teamlibrary"]
 }
